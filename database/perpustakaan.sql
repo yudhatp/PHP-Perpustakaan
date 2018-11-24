@@ -5,12 +5,12 @@
 -- HeidiSQL Version:             9.3.0.4984
 -- --------------------------------------------------------
 
--- Dumping database structure for perpustakaan
-CREATE DATABASE IF NOT EXISTS `perpustakaan` /*!40100 DEFAULT CHARACTER SET latin1 */;
-USE `perpustakaan`;
+-- Dumping database structure for yudhatpm_perpustakaan
+CREATE DATABASE IF NOT EXISTS `yudhatpm_perpustakaan` /*!40100 DEFAULT CHARACTER SET latin1 */;
+USE `yudhatpm_perpustakaan`;
 
 
--- Dumping structure for table perpustakaan.p_role
+-- Dumping structure for table yudhatpm_perpustakaan.p_role
 CREATE TABLE IF NOT EXISTS `p_role` (
   `id_p_role` int(11) NOT NULL AUTO_INCREMENT,
   `nama_role` varchar(10) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `p_role` (
   PRIMARY KEY (`id_p_role`)
 ) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.p_role: 3 rows
+-- Dumping data for table yudhatpm_perpustakaan.p_role: 3 rows
 /*!40000 ALTER TABLE `p_role` DISABLE KEYS */;
 INSERT INTO `p_role` (`id_p_role`, `nama_role`, `create_date`) VALUES
 	(1, 'admin', '2016-10-29 21:03:10'),
@@ -27,7 +27,7 @@ INSERT INTO `p_role` (`id_p_role`, `nama_role`, `create_date`) VALUES
 /*!40000 ALTER TABLE `p_role` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_account
+-- Dumping structure for table yudhatpm_perpustakaan.t_account
 CREATE TABLE IF NOT EXISTS `t_account` (
   `id_t_account` int(11) NOT NULL AUTO_INCREMENT,
   `id_p_role` int(11) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `t_account` (
   PRIMARY KEY (`id_t_account`)
 ) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_account: 5 rows
+-- Dumping data for table yudhatpm_perpustakaan.t_account: 5 rows
 /*!40000 ALTER TABLE `t_account` DISABLE KEYS */;
 INSERT INTO `t_account` (`id_t_account`, `id_p_role`, `username`, `password`, `create_date`, `create_by`, `update_date`, `update_by`) VALUES
 	(1, 1, 'adm', '81186D077459FCA990144F65D3340E06', '2016-10-17 23:24:37', '', '0000-00-00 00:00:00', NULL),
@@ -51,7 +51,7 @@ INSERT INTO `t_account` (`id_t_account`, `id_p_role`, `username`, `password`, `c
 /*!40000 ALTER TABLE `t_account` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_anggota
+-- Dumping structure for table yudhatpm_perpustakaan.t_anggota
 CREATE TABLE IF NOT EXISTS `t_anggota` (
   `id_t_anggota` int(11) NOT NULL AUTO_INCREMENT,
   `id_t_account` int(11) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `t_anggota` (
   PRIMARY KEY (`id_t_anggota`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_anggota: ~3 rows (approximately)
+-- Dumping data for table yudhatpm_perpustakaan.t_anggota: ~3 rows (approximately)
 /*!40000 ALTER TABLE `t_anggota` DISABLE KEYS */;
 INSERT INTO `t_anggota` (`id_t_anggota`, `id_t_account`, `no_anggota`, `nama`, `tgl_daftar`, `tgl_lahir`, `jenis_kelamin`, `no_telp`, `alamat`, `keterangan`, `status`, `update_date`, `update_by`, `create_by`, `create_date`) VALUES
 	(3, 3, 'ANG04092016', 'Asti', '2016-10-30', '1993-04-09', 'Wanita', '081298770101', 'Bogor,Cibinong', '', 'Aktif', '2016-11-08', 'adm', 'adm', '2016-10-30'),
@@ -80,7 +80,7 @@ INSERT INTO `t_anggota` (`id_t_anggota`, `id_t_account`, `no_anggota`, `nama`, `
 /*!40000 ALTER TABLE `t_anggota` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_buku
+-- Dumping structure for table yudhatpm_perpustakaan.t_buku
 CREATE TABLE IF NOT EXISTS `t_buku` (
   `id_t_buku` int(11) NOT NULL AUTO_INCREMENT,
   `nama_buku` varchar(128) NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS `t_buku` (
   PRIMARY KEY (`id_t_buku`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_buku: ~6 rows (approximately)
+-- Dumping data for table yudhatpm_perpustakaan.t_buku: ~6 rows (approximately)
 /*!40000 ALTER TABLE `t_buku` DISABLE KEYS */;
 INSERT INTO `t_buku` (`id_t_buku`, `nama_buku`, `jenis`, `penulis`, `penerbit`, `tahun_terbit`, `harga`, `kode_rak`, `stok`, `sinopsis`, `gambar`, `create_date`, `create_by`, `update_date`, `update_by`) VALUES
 	(1, 'Mudah Membuat Portal Berita Online dengan PHP dan MySQL', 'Komputer', 'Wahana Komputer', 'Andi', '2012', 71500, 'R1', 9, 'Buku PAS: Mudah Membuat Portal Berita Online dengan PHP dan MySQL ini menjelaskan tentang pembuatan portal berita online menggunakan PHP dan MySQL. Buku ini ditujukan bagi Anda yang tertarik dalam bidang pemrograman website, khususnya PHP', 'Mudah-Membuat-Portal-Berita-Online-Dengan-PHP-MySQL.jpg', '2016-10-30', 'adm', '2016-10-18 08:10:28', NULL),
@@ -112,7 +112,7 @@ INSERT INTO `t_buku` (`id_t_buku`, `nama_buku`, `jenis`, `penulis`, `penerbit`, 
 /*!40000 ALTER TABLE `t_buku` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_detil_pinjam
+-- Dumping structure for table yudhatpm_perpustakaan.t_detil_pinjam
 CREATE TABLE IF NOT EXISTS `t_detil_pinjam` (
   `id_t_detil_pinjam` int(10) NOT NULL AUTO_INCREMENT,
   `id_t_peminjaman` int(11) NOT NULL,
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `t_detil_pinjam` (
   PRIMARY KEY (`id_t_detil_pinjam`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_detil_pinjam: ~4 rows (approximately)
+-- Dumping data for table yudhatpm_perpustakaan.t_detil_pinjam: ~4 rows (approximately)
 /*!40000 ALTER TABLE `t_detil_pinjam` DISABLE KEYS */;
 INSERT INTO `t_detil_pinjam` (`id_t_detil_pinjam`, `id_t_peminjaman`, `id_t_buku`, `tgl_kembali`, `kondisi`, `denda`, `qty`, `keterangan`, `update_date`, `update_by`) VALUES
 	(1, 1, 3, NULL, NULL, NULL, 1, NULL, NULL, NULL),
@@ -137,7 +137,7 @@ INSERT INTO `t_detil_pinjam` (`id_t_detil_pinjam`, `id_t_peminjaman`, `id_t_buku
 /*!40000 ALTER TABLE `t_detil_pinjam` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_peminjaman
+-- Dumping structure for table yudhatpm_perpustakaan.t_peminjaman
 CREATE TABLE IF NOT EXISTS `t_peminjaman` (
   `id_t_peminjaman` int(11) NOT NULL AUTO_INCREMENT,
   `no_peminjaman` varchar(10) NOT NULL,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS `t_peminjaman` (
   PRIMARY KEY (`id_t_peminjaman`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_peminjaman: ~3 rows (approximately)
+-- Dumping data for table yudhatpm_perpustakaan.t_peminjaman: ~3 rows (approximately)
 /*!40000 ALTER TABLE `t_peminjaman` DISABLE KEYS */;
 INSERT INTO `t_peminjaman` (`id_t_peminjaman`, `no_peminjaman`, `id_t_staff`, `id_t_anggota`, `tgl_pinjam`, `tgl_kembali`, `total_denda`, `create_date`, `create_by`, `update_date`, `update_by`) VALUES
 	(1, 'PJ-1000001', 1, 4, '2016-11-01', NULL, NULL, '2016-11-01', 'adm', NULL, NULL),
@@ -162,7 +162,7 @@ INSERT INTO `t_peminjaman` (`id_t_peminjaman`, `no_peminjaman`, `id_t_staff`, `i
 /*!40000 ALTER TABLE `t_peminjaman` ENABLE KEYS */;
 
 
--- Dumping structure for table perpustakaan.t_staff
+-- Dumping structure for table yudhatpm_perpustakaan.t_staff
 CREATE TABLE IF NOT EXISTS `t_staff` (
   `id_t_staff` int(11) NOT NULL AUTO_INCREMENT,
   `id_t_account` int(11) NOT NULL,
@@ -176,62 +176,13 @@ CREATE TABLE IF NOT EXISTS `t_staff` (
   PRIMARY KEY (`id_t_staff`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 
--- Dumping data for table perpustakaan.t_staff: ~1 rows (approximately)
+-- Dumping data for table yudhatpm_perpustakaan.t_staff: ~1 rows (approximately)
 /*!40000 ALTER TABLE `t_staff` DISABLE KEYS */;
 INSERT INTO `t_staff` (`id_t_staff`, `id_t_account`, `nama`, `alamat`, `status`, `create_date`, `create_by`, `update_date`, `update_by`) VALUES
 	(1, 2, 'Putra', 'Bogor,Cibinong', 'Aktif', '2016-11-01 15:30:33', 'adm', '2016-11-08 00:00:00', 'adm');
 /*!40000 ALTER TABLE `t_staff` ENABLE KEYS */;
 
-
--- Dumping structure for view perpustakaan.v_detil_pinjam
--- Creating temporary table to overcome VIEW dependency errors
-CREATE TABLE `v_detil_pinjam` (
-	`id_t_peminjaman` INT(11) NOT NULL,
-	`id_t_detil_pinjam` INT(10) NOT NULL,
-	`id_t_buku` INT(11) NOT NULL,
-	`nama_buku` VARCHAR(128) NOT NULL COLLATE 'latin1_swedish_ci',
-	`penulis` VARCHAR(64) NOT NULL COLLATE 'latin1_swedish_ci',
-	`harga` INT(8) NOT NULL COMMENT 'Untuk perhitungan denda',
-	`tgl_kembali` DATETIME NULL,
-	`qty` INT(8) NOT NULL,
-	`kondisi` VARCHAR(10) NULL COMMENT 'bagus, rusak, hilang' COLLATE 'latin1_swedish_ci',
-	`denda` INT(11) NULL COMMENT '30% dari harga buku jika rusak',
-	`keterangan` VARCHAR(64) NULL COLLATE 'latin1_swedish_ci'
-) ENGINE=MyISAM;
-
-
--- Dumping structure for view perpustakaan.v_history_peminjaman
--- Creating temporary table to overcome VIEW dependency errors
-CREATE TABLE `v_history_peminjaman` (
-	`id_t_anggota` INT(11) NOT NULL,
-	`no_anggota` VARCHAR(11) NOT NULL COLLATE 'latin1_swedish_ci',
-	`nama` VARCHAR(25) NOT NULL COLLATE 'latin1_swedish_ci',
-	`tgl_daftar` DATE NOT NULL,
-	`tgl_terakhir_pinjam` DATE NULL
-) ENGINE=MyISAM;
-
-
--- Dumping structure for view perpustakaan.v_peminjaman
--- Creating temporary table to overcome VIEW dependency errors
-CREATE TABLE `v_peminjaman` (
-	`id_t_peminjaman` INT(11) NOT NULL,
-	`no_peminjaman` VARCHAR(10) NOT NULL COLLATE 'latin1_swedish_ci',
-	`staff` VARCHAR(25) NOT NULL COLLATE 'latin1_swedish_ci',
-	`tgl_pinjam` DATE NOT NULL,
-	`tgl_kembali` DATE NULL COMMENT 'By System',
-	`no_anggota` VARCHAR(11) NOT NULL COLLATE 'latin1_swedish_ci',
-	`anggota` VARCHAR(25) NOT NULL COLLATE 'latin1_swedish_ci',
-	`username` VARCHAR(3) NOT NULL COLLATE 'latin1_swedish_ci',
-	`ID` INT(11) NOT NULL,
-	`id_t_anggota` INT(11) NOT NULL,
-	`jum` DECIMAL(32,0) NULL
-) ENGINE=MyISAM;
-
-
--- Dumping structure for view perpustakaan.v_detil_pinjam
--- Removing temporary table and create final VIEW structure
-DROP TABLE IF EXISTS `v_detil_pinjam`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` VIEW `v_detil_pinjam` AS SELECT
+CREATE VIEW `v_detil_pinjam` AS SELECT
 A.id_t_peminjaman,
 B.id_t_detil_pinjam,
 C.id_t_buku,
@@ -243,32 +194,24 @@ B.qty,
 B.kondisi,
 B.denda,
 B.keterangan
-FROM T_PEMINJAMAN A
-JOIN T_DETIL_PINJAM B
+FROM t_peminjaman A
+JOIN t_detil_pinjam B
 ON A.id_t_peminjaman = B.id_t_peminjaman
-JOIN T_BUKU C
+JOIN t_buku C
 ON B.id_t_buku = C.id_t_buku ;
 
-
--- Dumping structure for view perpustakaan.v_history_peminjaman
--- Removing temporary table and create final VIEW structure
-DROP TABLE IF EXISTS `v_history_peminjaman`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` VIEW `v_history_peminjaman` AS SELECT 
+CREATE VIEW `v_history_peminjaman` AS SELECT 
 B.id_t_anggota,
 B.no_anggota,
 B.nama,
 B.tgl_daftar,
 A.tgl_pinjam AS tgl_terakhir_pinjam
-FROM T_ANGGOTA B
-LEFT JOIN T_PEMINJAMAN A
+FROM t_anggota B
+LEFT JOIN t_peminjaman A
 ON A.id_t_anggota = B.id_t_anggota
-ORDER BY A.TGL_PINJAM DESC ;
+ORDER BY A.tgl_pinjam DESC ;
 
-
--- Dumping structure for view perpustakaan.v_peminjaman
--- Removing temporary table and create final VIEW structure
-DROP TABLE IF EXISTS `v_peminjaman`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` VIEW `v_peminjaman` AS SELECT 
+CREATE VIEW `v_peminjaman` AS SELECT 
 A.id_t_peminjaman,
 A.no_peminjaman,
 IFNULL(C.nama,'Admin') AS staff,
@@ -280,14 +223,14 @@ D.username,
 D.id_t_account as ID,
 B.id_t_anggota,
 SUM(E.qty) AS jum
-FROM T_PEMINJAMAN A
-JOIN T_ANGGOTA B
+FROM t_peminjaman A
+JOIN t_anggota B
 ON A.id_t_anggota = B.id_t_anggota
-LEFT JOIN T_STAFF C
+LEFT JOIN t_staff C
 ON A.id_t_staff = C.id_t_staff
-JOIN T_ACCOUNT D
+JOIN t_account D
 ON B.id_t_account = D.id_t_account 
-LEFT JOIN T_DETIL_PINJAM E
+LEFT JOIN t_detil_pinjam E
 ON E.id_t_peminjaman = A.id_t_peminjaman 
 GROUP BY A.id_t_peminjaman ;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
