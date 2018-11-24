@@ -1,12 +1,8 @@
 <?php
-require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
-$id_pj = mysqli_real_escape_string($db,$_GET['id']);
-$errornya = mysqli_real_escape_string($db,$_GET['error']);
+include("header.php");
+$error = "";
 
-if($errornya != null){
-	$error = $errornya;
-}
+$id_pj = mysqli_real_escape_string($db,$_GET['id']);
 	
 if($id_pj == null){
 	$id_pj = 0;
@@ -81,9 +77,7 @@ if(isset($_POST['btnsubmit'])) {
 	}else{
 		//update
 	}
-}
-
-include("header.php");	
+}	
 ?>
 <div id="page-wrapper">
 	<div class="row">

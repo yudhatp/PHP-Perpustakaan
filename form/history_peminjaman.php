@@ -1,6 +1,6 @@
 <?php
 require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
+//require_once '../setting/session.php';
 $id_ag = mysqli_real_escape_string($db,$_GET['id']);
 
 if ($id_ag <> ''){
@@ -11,7 +11,7 @@ if ($id_ag <> ''){
 	$tampil_data = mysqli_fetch_array($result_data,MYSQLI_ASSOC);
 	
 	$usersession = $_SESSION['login_user'];
-	
+	echo $_SESSION['login_user'];
 	$sql = "select id_p_role, id_t_account from t_account where username = '$usersession' ";
 	$result = mysqli_query($db,$sql);
 	$row = mysqli_fetch_array($result,MYSQLI_ASSOC);

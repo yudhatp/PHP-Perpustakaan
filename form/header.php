@@ -1,7 +1,11 @@
 <?php 
+	require_once '../setting/koneksi.php';
 	session_start();
-	include("cek_session.php");
 	
+	if(!isset($_SESSION['login_user'])){
+		header("location:../index.php");
+	}
+
 	$usersession = $_SESSION['login_user'];
 	
 	$sql = "select id_p_role, id_t_account from t_account where username = '$usersession' ";

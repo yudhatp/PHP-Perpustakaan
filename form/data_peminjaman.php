@@ -2,15 +2,30 @@
 	include("../setting/koneksi.php");
 	$where = " WHERE 1=1 ";
 
-			if($_GET['txtNo'] <>'' ){
-				$where .= " AND no_peminjaman LIKE '%".$_GET['txtNo']."%' ";
-			}
-					if($_GET['txtNama'] <>'' ){
-						$where .= " AND anggota LIKE '%".$_GET['txtNama']."%' ";
-					}
-						if($_GET['txtTgl'] <>'' ){
-							$where .= " AND tgl_pinjam = '".$_GET['txtTgl']."' ";
-						} 
+	$txtNo = "";
+	$txtNama = "";
+	$txtTgl = "";
+	
+	if(isset($_GET['txtNo'])){
+		$txtNo = mysqli_real_escape_string($db,$_GET['txtNo']);
+		if($txtNo != ""){
+			$where .= " AND no_peminjaman LIKE '%$txtNo%' ";
+		}
+	}
+	
+	if(isset($_GET['txtNama'])){
+		$txtNama = mysqli_real_escape_string($db,$_GET['txtNama']);
+		if($txtNama != ""){
+			$where .= " AND anggota LIKE '%$txtNama%' ";
+		}
+	}
+	
+	if(isset($_GET['txtTgl'])){
+		$txtTgl = mysqli_real_escape_string($db,$_GET['txtTgl']);
+		if($txtTgl != ""){
+			$where .= " AND tgl_pinjam = '$txtTgl' ";
+		}
+	}
 						
 	include("header.php");	
 ?>
@@ -27,13 +42,13 @@
 		<table>
 		  <tr>
 			<td>No Peminjaman&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtNo" value="<?php echo $_GET['txtNo']; ?>"></td>
+			<td><input type="text" class="form-control"  name="txtNo" value="<?php echo $txtNo; ?>"></td>
 			<td>&nbsp;Tanggal Peminjaman&nbsp;</td>
-			<td><input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $_GET['txtTgl']; ?>"></td>
+			<td><input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $txtTgl; ?>"></td>
 		  </tr>
 		  <tr colspan="2">
 			<td>Nama Anggota&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtNama" value="<?php echo $_GET['txtNama']; ?>"></td>
+			<td><input type="text" class="form-control"  name="txtNama" value="<?php echo $txtNama; ?>"></td>
 		  </tr>
 		  <tr style="height:50px">
 			<td></td>
@@ -73,6 +88,7 @@
 			$from = (($page * $max_results) - $max_results);
 			
 			$sql = "SELECT * FROM v_peminjaman $where LIMIT $from, $max_results";
+			//echo $sql;
 			$result = mysqli_query($db,$sql);
 			$jum_data = mysqli_num_rows($result);
 			

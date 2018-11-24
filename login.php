@@ -1,5 +1,6 @@
 <?php
    include("setting/koneksi.php");
+   $error = "";
    session_start();
    
    if($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -12,12 +13,10 @@
       $sql = "SELECT username FROM t_account WHERE username = '$myusername' and password = '$hash_pass'";
       $result = mysqli_query($db,$sql);
       $row = mysqli_fetch_array($result,MYSQLI_ASSOC);
-      $active = $row['active'];
       
       $count = mysqli_num_rows($result);
 		
       if($count == 1) {
-         session_register("myusername");
          $_SESSION['login_user'] = $myusername;
      
 		 header("location:form/dashboard.php");

@@ -1,6 +1,5 @@
 <?php
-require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
+include("header.php");	
 $id_pj = mysqli_real_escape_string($db,$_GET['id']);
 $usersession = $_SESSION['login_user'];
 
@@ -15,8 +14,6 @@ if ($id_pj != null){
 }else{
 	header('location:data_peminjaman.php');
 }
-
-include("header.php");	
 ?>
 <div id="page-wrapper">
 	<div class="row">

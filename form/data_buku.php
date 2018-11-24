@@ -1,6 +1,6 @@
 <?php
 	include("../setting/koneksi.php");
-	require_once '../setting/session.php';
+	//require_once '../setting/session.php';
 	
 	$usersession = $_SESSION['login_user'];
 	

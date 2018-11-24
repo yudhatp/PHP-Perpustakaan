@@ -1,6 +1,6 @@
 <?php
 require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
+//require_once '../setting/session.php';
 $id_bk = mysqli_real_escape_string($db,$_GET['id']);
 	//$usersession = $_SESSION['login_user'];
 
