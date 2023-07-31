@@ -1,20 +1,23 @@
 <?php
-	include("../setting/koneksi.php");
-	$where = " WHERE 1=1 ";
+include("header.php");	
 
-			if($_GET['txtNama'] <>'' ){
+$aktif = "";
+$tidak = "";
+$where = " WHERE 1=1 ";
+
+			if(isset($_GET['txtNama'])){
 				$where .= " AND nama LIKE '%".$_GET['txtNama']."%' ";
 			}
-				if($_GET['txtTgl'] <>'' ){
+				if(isset($_GET['txtTgl'])){
 					$where .= " AND tgl_daftar = '".$_GET['txtTgl']."' ";
 				}
-					if($_GET['txtAlamat'] <>'' ){
+					if(isset($_GET['txtAlamat'])){
 						$where .= " AND alamat LIKE '%".$_GET['txtAlamat']."%' ";
 					}
-						if($_GET['txtStatus'] <>'' && $_GET['txtStatus'] <> 'Semua'){
+						if(isset($_GET['txtStatus']) && $_GET['txtStatus'] <> 'Semua'){
 							$where .= " AND status = '".$_GET['txtStatus']."' ";
 						} 
-include("header.php");	
+
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -24,41 +27,48 @@ include("header.php");
                 <!-- /.col-lg-12 -->
 	</div>
    <div class="row">
-		<div class="col-lg-8 col-md-6">
+		<div class="col-lg-12">
 		<form method="GET">
-		<table>
-		  <tr>
-			<td>Nama Anggota&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtNama" value="<?php echo $_GET['txtNama']; ?>"></td>
-			<td>&nbsp;Tanggal Daftar&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtTgl" id="txtTgl" value="<?php echo $_GET['txtTgl']; ?>"></td>
-		  </tr>
-		  <tr>
-			<td>Alamat&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtAlamat" value="<?php echo $_GET['txtAlamat']; ?>"></td>
-			<td>&nbsp;Status</td>
-			<?php
-					if($_GET['txtStatus']  == "Aktif") {
-						$aktif = "selected=selected";
-					}else if($_GET['txtStatus']  == "Tidak Aktif") {
-						$tidak = "selected=selected";
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Nama Anggota</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtNama" value="<?php echo $_GET['txtNama'] ?? ''; ?>">
+				</div>
+				<label class="col-sm-2 col-form-label">Tanggal Daftar</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $_GET['txtTgl'] ?? ''; ?>">
+				</div>
+			</div>
+
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Alamat</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtAlamat" value="<?php echo $_GET['txtAlamat'] ?? ''; ?>">
+				</div>
+				<label class="col-sm-2 col-form-label">Status</label>
+				<div class="col-sm-4">
+					<?php
+					if(isset($_GET['txtStatus'])){
+						if($_GET['txtStatus']  == "Aktif") {
+							$aktif = "selected=selected";
+						}else if($_GET['txtStatus']  == "Tidak Aktif") {
+							$tidak = "selected=selected";
+						}
 					}
-				?>
-			<td>
-				<select class="form-control" name="txtStatus">
+					?>
+					<select class="form-control" name="txtStatus">
 						<option>Semua</option>
-						<option <?php echo $aktif;?> >Aktif</option>
+						<option value="aktif" <?php echo $aktif;?> >Aktif</option>
                         <option <?php echo $tidak;?> >Tidak Aktif</option>
-				</select>
-			</td>
-		  </tr>
-		  <tr style="height:50px">
-			<td></td>
-			<td valign="middle"><button type="submit" class="btn btn-small btn-primary btn-block" name="btncari">Cari</button></td>
-			<td></td>
-			<td></td>
-		  </tr>
-		</table>
+					</select>
+				</div>
+			</div>
+
+			<div class="form-group row">
+				<div class="col-sm-6">
+					<button type="submit" class="btn btn-small btn-primary btn-block">Cari</button>
+				</div>
+			</div>
 		</form>
 		</div>
 	</div>

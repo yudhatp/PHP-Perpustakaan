@@ -1,5 +1,4 @@
 <?php
-	require_once '../setting/koneksi.php';
 	require_once '../setting/session.php';
 	require('../lib/tcpdf/tcpdf.php');
 

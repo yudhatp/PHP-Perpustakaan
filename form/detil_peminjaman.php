@@ -25,44 +25,62 @@ if ($id_pj != null){
 	
 	<div class="row">
 		<div class="col-lg-12">
-		<table>
 		  <?php
 			$sql_pj = "SELECT * FROM v_peminjaman WHERE id_t_peminjaman = $id_pj";
-			//echo $sql_pj;
+			
 			$result_pj = mysqli_query($db,$sql_pj);
 			
 			$tampil = mysqli_fetch_array($result_pj,MYSQLI_ASSOC);
 				?>
-						<tr>
-							<td>No Peminjaman :</td>
-							<td><?php echo $tampil['no_peminjaman']; ?></td>
-						</tr>
-						<tr>
-							<td>Nama Staff :</td>
-							<td><?php echo $tampil['staff']; ?></td>
-						</tr>
-						<tr>
-							<td>Tanggal Pinjam :</td>
-							<td><?php echo $tampil['tgl_pinjam']; ?></td>
-						</tr>
-						<tr>
-							<td>Tanggal Kembali :</td>
-							<td><?php echo $tampil['tgl_kembali']; ?></td>
-						</tr>
-						<tr>
-							<td>No Anggota :</td>
-							<td><?php echo $tampil['no_anggota']; ?></td>
-						</tr>
-						<tr>
-							<td>Nama Anggota :</td>
-							<td><?php echo $tampil['anggota']; ?></td>
-						</tr>
-						<tr>
-							<td>Jumlah Buku :</td>
-							<td><?php echo $tampil['jum']; ?></td>
-						</tr>
-			</table>
-		  <hr>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">No Peminjaman</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['no_peminjaman'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Nama Staff</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['staff'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Tanggal Pinjam</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['tgl_pinjam'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Tanggal Kembali</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['tgl_kembali'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">No Anggota</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['no_anggota'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Nama Anggota</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['anggota'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Jumlah Buku</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['jum'] ?? '0'; ?></p>
+				</div>
+			</div>
 		</div>
 	</div>
 	

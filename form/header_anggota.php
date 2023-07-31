@@ -4,8 +4,8 @@
 	    <link rel="stylesheet" type="text/css" href="../template/alert.css">
 		<link href="../template/css/bootstrap.min.css" rel="stylesheet" />
 		<link href="../template/css/sb-admin-2.css" rel="stylesheet" />
-		<link rel="stylesheet" href="../template/js/jquery-ui-1.11.4/jquery-ui.css" />
-		<link rel="stylesheet" href="../template/js/jquery-ui-1.11.4/jquery-ui-smooth.css">
+		<link rel="stylesheet" href="../template/js/jquery-ui-1.13.2/jquery-ui.css" />
+		<link rel="stylesheet" href="../template/js/jquery-ui-1.13.2/jquery-ui-smooth.css">
    </head>
 <body>
    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
@@ -17,7 +17,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="index.php">Perpustakaan 5F</a>
+          <a class="navbar-brand" href="index.php">Perpustakaan</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-top-links navbar-right">

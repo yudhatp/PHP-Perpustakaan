@@ -58,41 +58,52 @@ include("header.php");
 	
 	<div class="row">
 		<div class="col-lg-12">
-			<table>
-						<tr>
-							<td>Nama :</td>
-							<td><?php echo $tampil['nama']; ?></td>
-						</tr>
-						<?php
-						if($row['id_p_role']==3){
-						?>
-						<tr>
-							<td>No Anggota :</td>
-							<td><?php echo $tampil['no_anggota']; ?></td>
-						</tr>
-						<?php
-						}else{
-						?>
-						<tr>
-							<td>Role :</td>
-							<td><?php echo $tampil['nama_role']; ?></td>
-						</tr>
-						<?php
-						}
-						?>
-						<tr>
-							<td>Tanggal Register:</td>
-							<td><?php echo $tampil['tgl_register']; ?></td>
-						</tr>
-						<tr>
-							<td>Last Changed Password :</td>
-							<td><?php echo $tampil['last_change_pass']; ?></td>
-						</tr>
-						<tr>
-							<td>Last Changed Profile :</td>
-							<td><?php echo $tampil['last_change_profile']; ?></td>
-						</tr>
-			</table>
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Nama</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['nama'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<?php if($row['id_p_role']==3){ ?>
+			<div class="row">
+				<label class="col-sm-2 col-form-label">No Anggota</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['no_anggota'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<?php }else{ ?>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Role</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['nama_role'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<?php } ?>
+			
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Tanggal Register</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['tgl_register'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Last Changed Password</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['last_change_pass'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Last Changed Profile</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['last_change_profile'] ?? ''; ?></p>
+				</div>
+			</div>
 		</div>
 	</div>
 	<hr>

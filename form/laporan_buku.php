@@ -1,7 +1,4 @@
 <?php
-require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
-
 include("header.php");	
 ?>
 <div id="page-wrapper">

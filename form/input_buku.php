@@ -1,7 +1,6 @@
 <?php
-ini_set('display_errors', 0);
-require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
+include("header.php");
+$error = "";
 $id_bk = mysqli_real_escape_string($db,$_GET['id']);
 
 if ($id_bk != null){
@@ -95,11 +94,17 @@ if(isset($_POST['btnsubmit'])) {
 	
 			if ($db->query($query)) {
 				$db->close();
-				header('location:data_buku.php');
+				//notif success
+				echo "<script>
+						alert('Data berhasil diubah');
+						window.location.href='data_buku.php';
+					</script>";
+
+				//header('location:data_buku.php');
 			}
 	}
 }
-include("header.php");	
+
 ?>
 <div id="page-wrapper">
 	<div class="row">

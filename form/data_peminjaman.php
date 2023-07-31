@@ -1,6 +1,6 @@
 <?php
-	include("../setting/koneksi.php");
-	$where = " WHERE 1=1 ";
+include("header.php");
+$where = " WHERE 1=1 ";
 
 	$txtNo = "";
 	$txtNama = "";
@@ -27,7 +27,7 @@
 		}
 	}
 						
-	include("header.php");	
+		
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -37,26 +37,28 @@
                 <!-- /.col-lg-12 -->
 	</div>
    <div class="row">
-		<div class="col-lg-8 col-md-6">
+		<div class="col-lg-12">
 		<form method="GET">
-		<table>
-		  <tr>
-			<td>No Peminjaman&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtNo" value="<?php echo $txtNo; ?>"></td>
-			<td>&nbsp;Tanggal Peminjaman&nbsp;</td>
-			<td><input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $txtTgl; ?>"></td>
-		  </tr>
-		  <tr colspan="2">
-			<td>Nama Anggota&nbsp;</td>
-			<td><input type="text" class="form-control"  name="txtNama" value="<?php echo $txtNama; ?>"></td>
-		  </tr>
-		  <tr style="height:50px">
-			<td></td>
-			<td valign="middle"><button type="submit" class="btn btn-small btn-primary btn-block">Cari</button></td>
-			<td></td>
-			<td></td>
-		  </tr>
-		</table>
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">No Peminjaman</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtNo" value="<?php echo $txtNo; ?>">
+				</div>
+				<label class="col-sm-2 col-form-label">Tanggal Peminjaman</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $txtTgl; ?>">
+				</div>
+			</div>
+
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Nama Anggota</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtNama" value="<?php echo $txtNama; ?>">
+				</div>
+				<div class="col-sm-6">
+					<button type="submit" class="btn btn-small btn-primary btn-block">Cari</button>
+				</div>
+			</div>
 		</form>
 		</div>
 	</div>
