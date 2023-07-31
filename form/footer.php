@@ -7,7 +7,6 @@
             <div class="row">
                 <div class="col-lg-12">
                     <p>Copyright &copy; 2016 - <?php echo date("Y"); ?> by Yudha Tri Putra </p>
-					<p>web ini hanya sample saja.</p>
                 </div>
             </div>
         </footer>

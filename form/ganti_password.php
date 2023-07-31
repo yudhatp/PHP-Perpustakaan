@@ -1,6 +1,7 @@
 <?php
 require_once '../setting/koneksi.php';
-require_once '../setting/session.php';
+include("header.php");	
+$error = "";
 
 if(isset($_POST['btnsubmit'])) {
 	$temp_lama = $_POST['password_lama'];
@@ -35,7 +36,6 @@ if(isset($_POST['btnsubmit'])) {
 	}
 }
 
-include("header.php");	
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -60,25 +60,25 @@ include("header.php");
 							}
 							?>
 							<br>
-							<div class="form-group">
+							<div class="form-group row">
 								<label class="control-label col-sm-4">Password Lama</label>
 								<div class="col-sm-8">
-								<input type="password" class="form-control" name="password_lama" required  /><br>
+									<input type="password" class="form-control" name="password_lama" required  /><br>
 								</div>
 							</div>
-							<div class="form-group">
+							<div class="form-group row">
 								<label class="control-label col-sm-4">Password Baru</label>
 								<div class="col-sm-8">
-								<input type="password" class="form-control" id="password_baru" placeholder="Password Baru" name="password_baru" required  />
+									<input type="password" class="form-control" id="password_baru" placeholder="Password Baru" name="password_baru" required  />
 								</div>
 							</div>
-							<div class="form-group">
+							<div class="form-group row">
 								<label class="control-label col-sm-4">Konfirm Password Baru</label>
 								<div class="col-sm-8">
-								<input type="password" class="form-control" id="password_conf" placeholder="Konfirm Password" name="password_conf" required  />
+									<input type="password" class="form-control" id="password_conf" placeholder="Konfirm Password" name="password_conf" required  />
 								</div>
 							</div>
-							<div class="form-group" align="right">
+							<div class="form-group row" align="right">
 							<div class="col-sm-4">
 							<!-- sengaja dikosongin :D-->
 							</div>

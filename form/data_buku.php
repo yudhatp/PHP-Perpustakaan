@@ -1,6 +1,6 @@
 <?php
-	include("../setting/koneksi.php");
-	//require_once '../setting/session.php';
+	require_once '../setting/session.php';
+	include("header.php");	
 	
 	$usersession = $_SESSION['login_user'];
 	
@@ -10,22 +10,26 @@
 	$idnya = $row['id_t_account'];
 	
 	$where = " WHERE 1=1 ";
-	if($_GET['txtNama'] <>'' ){
-				$where .= " AND nama_buku LIKE '%".$_GET['txtNama']."%' ";
-			}
-				if($_GET['txtTahun'] <>'' ){
-					$where .= " AND tahun_terbit = '".$_GET['txtTahun']."' ";
-				}
-					if($_GET['txtPenulis'] <>'' ){
-						$where .= " AND penulis LIKE '%".$_GET['txtPenulis']."%' ";
-					}
-						if($_GET['txtJenis'] <>'' && $_GET['txtJenis'] <> 'Semua'){
-							$where .= " AND jenis LIKE '%".$_GET['txtJenis']."%' ";
-						} 
-							if($_GET['txtPenerbit'] <>'' ){
-								$where .= " AND penerbit LIKE '%".$_GET['txtPenerbit']."%' ";
-							} 
-	include("header.php");	
+	if(isset($_GET['txtNama'])){
+		$where .= " AND nama_buku LIKE '%".$_GET['txtNama']."%' ";
+	}
+	
+	if(isset($_GET['txtTahun'])){
+		$where .= " AND tahun_terbit = '".$_GET['txtTahun']."' ";
+	}
+					
+	if(isset($_GET['txtPenulis'])){
+		$where .= " AND penulis LIKE '%".$_GET['txtPenulis']."%' ";
+	}
+						
+	if(isset($_GET['txtJenis']) && $_GET['txtJenis'] <> 'Semua'){
+		$where .= " AND jenis LIKE '%".$_GET['txtJenis']."%' ";
+	} 
+							
+	if(isset($_GET['txtPenerbit'])){
+		$where .= " AND penerbit LIKE '%".$_GET['txtPenerbit']."%' ";
+	} 
+	
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -35,23 +39,31 @@
                 <!-- /.col-lg-12 -->
 	</div>
     <div class="row">
-		<div class="col-lg-8 col-md-6">
+		<div class="col-lg-12">
 		<form method="GET">
-			<table>
-			  <tr>
-				<td>Nama Buku</td>
-				<td><input type="text" class="form-control"  name="txtNama" value="<?php echo $_GET['txtNama']; ?>"></td>
-				<td>&nbsp;Tahun Terbit&nbsp;</td>
-				<td><input type="text" class="form-control"  name="txtTahun" value="<?php echo $_GET['txtTahun']; ?>"></td>
-			  </tr>
-			  <tr>
-				<td>Nama Penulis&nbsp;</td>
-				<td><input type="text" class="form-control"  name="txtPenulis" value="<?php echo $_GET['txtPenulis']; ?>"></td>
-				<td>&nbsp;Jenis Buku&nbsp;</td>
-				<?php
-					if($_GET['txtJenis'] == "Umum") {
-					 $um = "selected=selected";
-					}else if($_GET['txtJenis'] == "Komputer") {
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Nama Buku</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtNama" value="<?php echo $_GET['txtNama'] ?? ''; ?>">
+				</div>
+				<label class="col-sm-2 col-form-label">Tahun Terbit</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtTahun" value="<?php echo $_GET['txtTahun'] ?? ''; ?>">
+				</div>
+			</div>
+
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Nama Penulis</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtPenulis" value="<?php echo $_GET['txtPenulis'] ?? ''; ?>">
+				</div>
+				<label class="col-sm-2 col-form-label">Jenis Buku</label>
+				<div class="col-sm-4">
+					<?php
+					if(isset($_GET['txtJenis'])){
+						if($_GET['txtJenis'] == "Umum") {
+						 $um = "selected=selected";
+						}else if($_GET['txtJenis'] == "Komputer") {
 						$kom = "selected=selected";
 						}else if($_GET['txtJenis'] == "Novel") {
 							$nov = "selected=selected";
@@ -60,30 +72,28 @@
 								}else if($_GET['txtJenis'] == "Komik") {
 									$kk = "selected=selected";
 								}
-				?>
-				<td><select name="txtJenis" class="form-control">
+							}
+					?>
+					<select name="txtJenis" class="form-control">
 							<option>Semua</option>
 							<option <?php echo $um;?> >Umum</option>
                             <option <?php echo $kom;?> >Komputer</option>
                             <option <?php echo $nov;?> >Novel</option>
 							<option <?php echo $pd;?> >Pengembangan Diri</option>
 							<option <?php echo $kk;?> >Komik</option>
-                        </select>
-				</td>
-			  </tr>
-			  <tr>
-				<td>Penerbit</td>
-				<td><input type="text" class="form-control"  name="txtPenerbit" value="<?php echo $_GET['txtPenerbit']; ?>"></td>
-				<td></td>
-				<td></td>
-			  </tr>
-			  <tr style="height:50px">
-				<td></td>
-				<td valign="middle"><button type="submit" class="btn btn-small btn-primary btn-block">Cari</button></td>
-				<td></td>
-				<td></td>
-			  </tr>
-			</table>
+                    </select>
+				</div>
+			</div>
+
+			<div class="form-group row">
+				<label class="col-sm-2 col-form-label">Penerbit</label>
+				<div class="col-sm-4">
+					<input type="text" class="form-control"  name="txtPenerbit" value="<?php echo $_GET['txtPenerbit'] ?? ''; ?>">
+				</div>
+				<div class="col-sm-6">
+					<button type="submit" class="btn btn-small btn-primary btn-block">Cari</button>
+				</div>
+			</div>
 		</form>
 		</div>
 	</div>

@@ -1,9 +1,6 @@
-<?php 
-include("../setting/koneksi.php");
-include("header.php");
-?>
-
 <?php
+include("header.php");
+
 $user_check = $_SESSION['login_user'];
 
 $sql = "select id_p_role as role from t_account where username = '$user_check' ";

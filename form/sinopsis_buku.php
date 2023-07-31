@@ -1,6 +1,7 @@
 <?php
 require_once '../setting/koneksi.php';
-//require_once '../setting/session.php';
+include("header.php");	
+
 $id_bk = mysqli_real_escape_string($db,$_GET['id']);
 	//$usersession = $_SESSION['login_user'];
 
@@ -13,7 +14,7 @@ if($id_bk == null){
 	//echo $sql;
 }
 
-include("header.php");	
+
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -24,34 +25,51 @@ include("header.php");
 	</div>
 	
 	<div class="row">
-		<div class="col-lg-12">
-		<img src="<?php echo "../image/buku/".$tampil['gambar'];?>" align="left" width="400" height="500">
-			<table>
-						<tr>
-							<th>Judul:</th>
-							<td><?php echo $tampil['nama_buku']; ?></td>
-						</tr>
-						<tr>
-							<th>Jenis:</th>
-							<td><?php echo $tampil['jenis']; ?></td>
-						</tr>
-						<tr>
-							<th>Penulis:</th>
-							<td><?php echo $tampil['penulis']; ?></td>
-						</tr>
-						<tr>
-							<th>Penerbit:</th>
-							<td><?php echo $tampil['penerbit']; ?></td>
-						</tr>
-						<tr>
-							<th>Tahun:</th>
-							<td><?php echo $tampil['tahun_terbit']; ?></td>
-						</tr>
-						<tr>
-							<th valign="top">Sinopsis :</th>
-							<td><?php echo $tampil['sinopsis']; ?></td>
-						</tr>
-			</table>
+		<div class="col-sm-4">
+			<img src="<?php echo "../image/buku/".$tampil['gambar'];?>" align="left" width="400" height="500">
+		</div>
+		<div class="col-sm-8">
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Judul</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['nama_buku'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Jenis</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['jenis'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Penulis</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['penulis'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Penerbit</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['penerbit'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Tahun Terbit</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['tahun_terbit'] ?? ''; ?></p>
+				</div>
+			</div>
+
+			<div class="row">
+				<label class="col-sm-2 col-form-label">Sinopsis</label>
+				<div class="col-sm-6">
+					<p><?php echo $tampil['sinopsis'] ?? ''; ?></p>
+				</div>
+			</div>
 		</div>
 	</div>
 	<hr>

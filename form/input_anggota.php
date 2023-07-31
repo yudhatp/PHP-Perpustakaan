@@ -1,6 +1,8 @@
 <?php
-require_once '../setting/koneksi.php';
 require_once '../setting/session.php';
+include("header.php");	
+$status_w = "";
+
 $id_ag = mysqli_real_escape_string($db,$_GET['id']);
 
 if ($id_ag <> ''){
@@ -68,7 +70,7 @@ if(isset($_POST['btnsubmit'])) {
 	}
 	 $db->close();
 }
-include("header.php");	
+
 ?>
 <div id="page-wrapper">
 	<div class="row">
@@ -181,7 +183,7 @@ include("header.php");
 				<!-- sengaja dikosongin :D-->
 				</div>
 				<div class="col-sm-8">
-					<button type="reset" class="btn btn-default">Batal</button>
+					<button type="button" id="btnCancel" class="btn btn-default">Batal</button>
 					<button type="submit" name="btnsubmit" class="btn btn-primary">Simpan</button>
 					</div>
 				</div>
@@ -203,5 +205,9 @@ function isNumber(event){
 <script type="text/javascript">
 		$(document).ready(function(e) {
 		$("#tgllahir").datepicker({dateFormat: "yy-mm-dd"});
+
+		$("#btnCancel").click(function(){
+			window.location.href = "dashboard.php";
+		});
 	});
 </script>

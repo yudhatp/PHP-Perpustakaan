@@ -1,6 +1,9 @@
 <?php 
 	require_once '../setting/koneksi.php';
-	session_start();
+	if(!isset($_SESSION)) 
+    { 
+        session_start(); 
+    }
 	
 	if(!isset($_SESSION['login_user'])){
 		header("location:../index.php");

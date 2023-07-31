@@ -17,8 +17,8 @@ Fitur:
 - etc
 
 User Test:
-user	: ytp
-password: ytp1234
+- user	: ytp
+- password: ytp1234
 
-user	: adm
-password: adm1234
+- user	: adm
+- password: adm1234

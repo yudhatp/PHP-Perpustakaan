@@ -1,6 +1,6 @@
 <?php
-require_once '../setting/koneksi.php';
 require_once '../setting/session.php';
+include("header.php");	
 
 	$usersession = $_SESSION['login_user'];
 	
@@ -46,7 +46,7 @@ require_once '../setting/session.php';
 	$result = mysqli_query($db,$sql_profile);
 	$tampil = mysqli_fetch_array($result,MYSQLI_ASSOC);
 	
-include("header.php");	
+
 ?>
 <div id="page-wrapper">
 	<div class="row">
