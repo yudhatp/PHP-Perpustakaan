@@ -1,346 +1,194 @@
 <?php
-include("header.php");
-$error = "";
+require_once __DIR__ . '/../setting/session.php';
+$account = require_roles($db, [1, 2], 'dashboard.php');
 
-$id_pj = mysqli_real_escape_string($db,$_GET['id']);
-	
-if($id_pj == null){
-	$id_pj = 0;
-	$judul = "Input Peminjaman";
-}else{
-	$judul = "Edit Peminjaman";
-	$sql_data = "SELECT * FROM v_peminjaman WHERE id_t_peminjaman = $id_pj ";
-	//echo $sql_data;
-	$result_data = mysqli_query($db,$sql_data);
-	$tampil_data = mysqli_fetch_array($result_data,MYSQLI_ASSOC);
+$error = '';
+$peminjamanId = request_int($_GET, 'id');
+$isCreate = $peminjamanId <= 0;
+$loan = [
+    'no_peminjaman' => '',
+    'staff' => '',
+    'no_anggota' => '',
+    'anggota' => '',
+    'tgl_pinjam' => date('Y-m-d'),
+    'tgl_kembali' => null,
+];
+
+$errorCode = request_string($_GET, 'error');
+if ($errorCode === 'stok_kurang') {
+    $error = 'Stok buku tidak mencukupi.';
+} elseif ($errorCode === 'gagal_simpan') {
+    $error = 'Detail buku gagal disimpan. Buku yang sama mungkin sudah tercatat.';
 }
 
-if(isset($_POST['btnsubmit'])) {
-	$nama = $_POST['noanggota'];
-	$usersession = $_SESSION['login_user'];
-	
-	$sql = "select id_p_role, id_t_account from t_account where username = '$usersession' ";
-	$result = mysqli_query($db,$sql);
-	$row = mysqli_fetch_array($result,MYSQLI_ASSOC);
-	$idnya = $row['id_t_account'];
-	$roleid = $row['id_p_role'];
-	
-	$sql_ag = "SELECT id_t_anggota FROM t_anggota WHERE no_anggota = '$nama' ";
-	$result_ag = mysqli_query($db,$sql_ag);
-	$row_ag = mysqli_fetch_array($result_ag,MYSQLI_ASSOC);
-	$id_ag = $row_ag['id_t_anggota'];
-	//echo $sql_ag;
-	
-	if($id_pj == null){
-		
-		//cek dulu no anggotanya ada apa engga
-		if($id_ag == null){
-			$error = "No Anggota yang diinput salah";
-		}else{
-			//insert
-			//generate no peminjaman
-			$sql_2 = "SELECT IFNULL(MAX(no_peminjaman),0) AS nopj FROM t_peminjaman ";
-			$result_2 = mysqli_query($db,$sql_2);
-			$row_2 = mysqli_fetch_array($result_2,MYSQLI_ASSOC);
-			$temp = $row_2['nopj'];
-			//echo $temp."<br>";
-			
-			if($temp > 0){
-				$no_peminjaman = "PJ-1000001"; //$awal.$lahir.$tahun;
-			}else{
-				$awal = "PJ-";
-				$temp_pj = substr($temp,3);
-				//echo $temp_pj;
-				$tambah_no = $temp_pj+1;
-				//echo $tambah_no ;
-				$no_peminjaman = $awal.$tambah_no;
-			}
-			
-			//echo $no_peminjaman;
-			
-			//jika admin,maka null saja id_t_staff nya
-			if($roleid == 1){
-				$idnya = "null";
-			}
-			$query = "INSERT INTO t_peminjaman(no_peminjaman,id_t_staff,id_t_anggota,tgl_pinjam,create_date,create_by) 
-					  VALUES('$no_peminjaman',$idnya, $id_ag, curdate() ,curdate(),'$usersession')";
-			//echo $query;
-			$db->query($query);
-			
-			$sql_pj = "SELECT id_t_peminjaman FROM t_peminjaman ORDER BY id_t_peminjaman DESC LIMIT 1 ";
-			$result_pj = mysqli_query($db,$sql_pj);
-			$row_pj = mysqli_fetch_array($result_pj,MYSQLI_ASSOC);
-			$id_pja = $row_pj['id_t_peminjaman'];
-			$db->close();
-			header('location:input_peminjaman.php?id='.$id_pja);
-		}
-	}else{
-		//update
-	}
-}	
+if (!$isCreate) {
+    $stmt = mysqli_prepare($db, 'SELECT * FROM v_peminjaman WHERE id_t_peminjaman = ? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'i', $peminjamanId);
+    mysqli_stmt_execute($stmt);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+    if (!$row) {
+        redirect_to('data_peminjaman.php');
+    }
+    $loan = array_merge($loan, $row);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isCreate) {
+    verify_csrf($_POST['csrf_token'] ?? null);
+    $noAnggota = request_string($_POST, 'noanggota');
+
+    $stmt = mysqli_prepare($db, "SELECT id_t_anggota, no_anggota, nama FROM t_anggota WHERE no_anggota = ? AND status = 'Aktif' LIMIT 1");
+    mysqli_stmt_bind_param($stmt, 's', $noAnggota);
+    mysqli_stmt_execute($stmt);
+    $member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    mysqli_stmt_close($stmt);
+
+    if (!$member) {
+        $error = 'Nomor anggota tidak ditemukan atau anggota tidak aktif.';
+        $loan['no_anggota'] = $noAnggota;
+    } else {
+        $staffId = null;
+        if ((int) $account['id_p_role'] === 2) {
+            $accountId = (int) $account['id_t_account'];
+            $stmt = mysqli_prepare($db, "SELECT id_t_staff FROM t_staff WHERE id_t_account = ? AND status = 'Aktif' LIMIT 1");
+            mysqli_stmt_bind_param($stmt, 'i', $accountId);
+            mysqli_stmt_execute($stmt);
+            $staff = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+            mysqli_stmt_close($stmt);
+            if (!$staff) {
+                $error = 'Profil staff aktif tidak ditemukan.';
+            } else {
+                $staffId = (int) $staff['id_t_staff'];
+            }
+        }
+
+        if ($error === '') {
+            mysqli_begin_transaction($db);
+            try {
+                $numberResult = mysqli_query($db, "SELECT COALESCE(MAX(CAST(SUBSTRING(no_peminjaman, 4) AS UNSIGNED)), 1000000) AS nomor FROM t_peminjaman");
+                $lastNumber = (int) (mysqli_fetch_assoc($numberResult)['nomor'] ?? 1000000);
+                $noPeminjaman = 'PJ-' . str_pad((string) ($lastNumber + 1), 7, '0', STR_PAD_LEFT);
+                $memberId = (int) $member['id_t_anggota'];
+                $username = (string) $account['username'];
+
+                $insert = mysqli_prepare($db, 'INSERT INTO t_peminjaman (no_peminjaman, id_t_staff, id_t_anggota, tgl_pinjam, create_date, create_by) VALUES (?, ?, ?, CURDATE(), CURDATE(), ?)');
+                mysqli_stmt_bind_param($insert, 'siis', $noPeminjaman, $staffId, $memberId, $username);
+                if (!mysqli_stmt_execute($insert)) {
+                    throw new RuntimeException(mysqli_stmt_error($insert));
+                }
+                $newId = mysqli_insert_id($db);
+                mysqli_stmt_close($insert);
+                mysqli_commit($db);
+                redirect_to('input_peminjaman.php?id=' . $newId);
+            } catch (Throwable $exception) {
+                mysqli_rollback($db);
+                error_log($exception->getMessage());
+                $error = 'Peminjaman gagal disimpan. Silakan coba kembali.';
+            }
+        }
+    }
+}
+
+$details = null;
+$availableBooks = null;
+if (!$isCreate) {
+    $stmt = mysqli_prepare($db, 'SELECT * FROM v_detil_pinjam WHERE id_t_peminjaman = ? ORDER BY id_t_detil_pinjam');
+    mysqli_stmt_bind_param($stmt, 'i', $peminjamanId);
+    mysqli_stmt_execute($stmt);
+    $details = mysqli_stmt_get_result($stmt);
+
+    if (empty($loan['tgl_kembali'])) {
+        $availableBooks = mysqli_query($db, 'SELECT id_t_buku, nama_buku, stok FROM t_buku WHERE stok > 0 ORDER BY nama_buku');
+    }
+}
+
+$memberNumbers = [];
+if ($isCreate) {
+    $memberResult = mysqli_query($db, "SELECT no_anggota FROM t_anggota WHERE status = 'Aktif' ORDER BY no_anggota");
+    while ($memberRow = mysqli_fetch_assoc($memberResult)) {
+        $memberNumbers[] = $memberRow['no_anggota'];
+    }
+}
+
+include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-	<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header"><?php echo $judul;?></h1>
-                </div>
-                <!-- /.col-lg-12 -->
-	</div>
-	
-	<div class="row">
-		<div class="col-lg-6">
-			<?php
-							if ($error != ""){
-							?>
-							<div class="form-group">
-									<div class="alert">
-									<span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-									<?php echo $error; ?>
-									</div>
-							</div>
-							<?php
-								}
-							?>
-			
-			<br>
-			<form class="form-horizontal" method="post" id="formpinjam">
-				<div class="form-group">
-					<label class="control-label col-sm-4">No Peminjaman</label>
-					<div class="col-sm-8">
-					<p class="form-control-static"><?php echo $tampil_data['no_peminjaman'];?></p>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Nama Staff</label>
-					<div class="col-sm-8">
-					<p class="form-control-static"><?php echo $tampil_data['staff'];?></p>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Tanggal Pinjam</label>
-					<div class="col-sm-8">
-					<p class="form-control-static"><?php echo date("Y-m-d");?></p>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">No Anggota</label>
-					<div class="col-sm-8">
-					<!--<select class="form-control" name="noanggota">
-						<?php 
-							/*$sql_ag = "SELECT no_anggota FROM t_anggota";
-							$result_ag = mysqli_query($db,$sql_ag);
-							while($tampil_ag = mysqli_fetch_array($result_ag,MYSQLI_ASSOC)){ */
-							?>	
-						<option value="<?php //echo $tampil_ag['no_anggota']; ?>"><?php //echo $tampil_ag['no_anggota'] ?></option>
-							<?php 
-							//}
-							?>
-					</select> -->
-					<input type="text" maxlength="15" class="form-control" value="<?php echo $tampil_data['no_anggota'];?>" id="noanggota" name="noanggota" required  />
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Nama Anggota</label>
-					<div class="col-sm-8">
-					<p class="form-control-static"><?php echo $tampil_data['anggota'];?></p>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Tanggal Kembali</label>
-					<div class="col-sm-8">
-					<p class="form-control-static"><?php echo $tampil_data['tgl_kembali'];?></p>
-					</div>
-				</div>
-				<div class="form-group" align="right">
-				<div class="col-sm-4">
-				<!-- sengaja dikosongin :D-->
-				</div>
-				<div class="col-sm-8">
-					<a href="data_peminjaman.php" class="btn btn-default">Kembali</a>
-					<?php
-					if($id_pj == null){
-					?>
-					<button type="reset" class="btn btn-default">Batal</button>
-					<button type="submit" name="btnsubmit" class="btn btn-primary">Simpan</button>
-					<?php
-					}else{
-					?>
-					<a href="cetak_bukti.php?id=<?php echo $id_pj;?>" class="btn btn-primary">Cetak</a>
-					<?php
-					}
-					?>
-					</div>
-				</div>
-				<hr>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-lg-12">
-				<div class="form-group" align="left">
-				<?php
-					if($id_pj == null){
-						//null
-					}else{
-					?>
-				<div class="col-sm-4">
-					<button type="button" name="btnmodal" class="btn btn-primary"  data-toggle="modal" data-target="#myModal">+</button>
-					</div>
-				</div>
-				<?php
-					}
-				?>
-				<HR>
-				<table width="100%" class="table table-striped table-bordered table-hover">
-					<tr>
-						<th>No</th>
-						<th>Nama Buku</th>
-						<th>Penulis</th>
-						<th>Qty</th>
-						<th>Status</th>
-						<th>Harga</th>
-						<th>Denda</th>
-						<th>Keterangan</th>
-						<th colspan="2">Action</th>
-					</tr>
-					<?php
-						$sql = "SELECT * FROM v_detil_pinjam WHERE id_t_peminjaman = $id_pj";
-						//echo $sql;
-						$result = mysqli_query($db,$sql);
-						$no = 1;
-						while($tampil = mysqli_fetch_array($result,MYSQLI_ASSOC))
-						{
-						?>
-					<tr>
-						<td><?php echo $no;?></td>
-						<td><?php echo $tampil['nama_buku']; ?></td>
-						<td><?php echo $tampil['penulis']; ?></td>
-						<td><?php echo $tampil['qty']; ?></td>
-						<td><?php echo $tampil['kondisi']; ?></td>
-						<td><?php echo $tampil['harga']; ?></td>
-						<td><?php echo $tampil['denda']; ?></td>
-						<td><?php echo $tampil['keterangan']; ?></td>
-						<?php
-						if($tampil['kondisi'] == null){
-						?>
-						<td><a href="edit_detil_pinjam.php?id=<?php echo $tampil['id_t_detil_pinjam'];?>&id_pj=<?php echo $id_pj;?>" class="btn btn-info">Edit</a></td>
-						<td><a onclick="if(confirm('Apakah anda yakin ingin menghapus data ini ??')){ location.href='hapus_detil_pinjam.php?id=<?php echo $id_pj;?>&id_buku=<?php echo $tampil['id_t_buku']; ?>' }" class="btn btn-danger">Hapus</a></td>
-						<?php
-						}else{
-						?>
-						<td>-</td>
-						<td>-</td>
-						<?php
-						}
-						?>
-					</tr>
-					<?php
-				$no++;
-			}
-				?>
-				</table>
-			</form>
-		</div>
-	</div>
-</div>
-<!-- Modal -->
-<div id="myModal" class="modal fade" role="dialog">
-  <div class="modal-dialog">
+    <div class="row"><div class="col-lg-12"><h1 class="page-header"><?php echo $isCreate ? 'Input Peminjaman' : 'Detail Peminjaman'; ?></h1></div></div>
 
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Input Buku</h4>
-      </div>
-	  <form method="post" action="simpan_detil_pinjam.php?id=<?php echo $_GET['id'];?>">
-      <div class="modal-body">
-			<div class="form-group">
-				<label>Nama Buku</label>								
-					<select class="form-control" name="idbuku">
-						<?php 
-							$sql_bk = "SELECT id_t_buku, nama_buku FROM t_buku";
-							$result_bk = mysqli_query($db,$sql_bk);
-							while($tampil = mysqli_fetch_array($result_bk,MYSQLI_ASSOC)){
-							?>	
-						<option value="<?php echo $tampil['id_t_buku']; ?>"><?php echo $tampil['nama_buku'] ?></option>
-							<?php 
-							}
-							?>
-					</select>
-			</div>									
-			<div class="form-group">
-				<label>Qty</label>
-				<input name="qty" type="text" maxlength="2" onkeypress="return isNumber(event)" class="form-control" placeholder="Qty" required/>
-			</div>	
-      </div>
-      <div class="modal-footer">
-        <input type="submit" class="btn btn-primary" value="Simpan">
-      </div>
-	  </form>
-    </div>
+    <?php if ($error !== ''): ?>
+        <div class="alert alert-warning"><span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span><?php echo e($error); ?></div>
+    <?php endif; ?>
 
-  </div>
+    <div class="row"><div class="col-lg-7">
+        <div class="panel panel-default"><div class="panel-body">
+            <?php if ($isCreate): ?>
+                <form class="form-horizontal" method="post" autocomplete="off">
+                    <?php echo csrf_field(); ?>
+                    <div class="form-group"><label class="control-label col-sm-4">No Peminjaman</label><div class="col-sm-8"><p class="form-control-static">Dibuat otomatis</p></div></div>
+                    <div class="form-group"><label class="control-label col-sm-4">Tanggal Pinjam</label><div class="col-sm-8"><p class="form-control-static"><?php echo date('Y-m-d'); ?></p></div></div>
+                    <div class="form-group"><label class="control-label col-sm-4" for="noanggota">No Anggota</label><div class="col-sm-8"><input type="text" maxlength="20" class="form-control" value="<?php echo e($loan['no_anggota']); ?>" id="noanggota" name="noanggota" required></div></div>
+                    <div class="form-group"><div class="col-sm-offset-4 col-sm-8"><a href="data_peminjaman.php" class="btn btn-default">Batal</a> <button type="submit" class="btn btn-primary">Simpan</button></div></div>
+                </form>
+            <?php else: ?>
+                <div class="row"><div class="col-sm-4"><strong>No Peminjaman</strong></div><div class="col-sm-8"><?php echo e($loan['no_peminjaman']); ?></div></div><hr>
+                <div class="row"><div class="col-sm-4"><strong>Staff</strong></div><div class="col-sm-8"><?php echo e($loan['staff']); ?></div></div><hr>
+                <div class="row"><div class="col-sm-4"><strong>Tanggal Pinjam</strong></div><div class="col-sm-8"><?php echo e($loan['tgl_pinjam']); ?></div></div><hr>
+                <div class="row"><div class="col-sm-4"><strong>Anggota</strong></div><div class="col-sm-8"><?php echo e($loan['no_anggota'] . ' - ' . $loan['anggota']); ?></div></div><hr>
+                <div class="row"><div class="col-sm-4"><strong>Status</strong></div><div class="col-sm-8"><?php echo empty($loan['tgl_kembali']) ? '<span class="label label-warning">Dipinjam</span>' : '<span class="label label-success">Selesai ' . e($loan['tgl_kembali']) . '</span>'; ?></div></div>
+                <hr><a href="data_peminjaman.php" class="btn btn-default">Kembali</a> <a href="cetak_bukti.php?id=<?php echo $peminjamanId; ?>" target="_blank" class="btn btn-primary">Cetak Bukti</a>
+            <?php endif; ?>
+        </div></div>
+    </div></div>
+
+    <?php if (!$isCreate): ?>
+        <div class="row"><div class="col-lg-12">
+            <?php if (empty($loan['tgl_kembali'])): ?>
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalBuku"><span class="glyphicon glyphicon-plus"></span> Tambah Buku</button>
+                <br><br>
+            <?php endif; ?>
+            <div class="table-responsive"><table class="table table-striped table-bordered table-hover">
+                <thead><tr><th>No</th><th>Nama Buku</th><th>Penulis</th><th>Qty</th><th>Status</th><th>Harga</th><th>Denda</th><th>Keterangan</th><th colspan="2">Aksi</th></tr></thead>
+                <tbody>
+                <?php $no = 1; $hasDetails = false; while ($detail = mysqli_fetch_assoc($details)): $hasDetails = true; ?>
+                    <tr>
+                        <td><?php echo $no++; ?></td><td><?php echo e($detail['nama_buku']); ?></td><td><?php echo e($detail['penulis']); ?></td><td><?php echo (int) $detail['qty']; ?></td>
+                        <td><?php echo e($detail['kondisi'] ?: 'Dipinjam'); ?></td><td>Rp <?php echo number_format((int) $detail['harga'], 0, ',', '.'); ?></td><td>Rp <?php echo number_format((int) ($detail['denda'] ?? 0), 0, ',', '.'); ?></td><td><?php echo e($detail['keterangan']); ?></td>
+                        <?php if (empty($detail['tgl_kembali'])): ?>
+                            <td><a href="edit_detil_pinjam.php?id=<?php echo (int) $detail['id_t_detil_pinjam']; ?>&id_pj=<?php echo $peminjamanId; ?>" class="btn btn-info btn-sm">Kembalikan</a></td>
+                            <td><a href="hapus_detil_pinjam.php?id=<?php echo $peminjamanId; ?>&id_buku=<?php echo (int) $detail['id_t_buku']; ?>&csrf=<?php echo urlencode(csrf_token()); ?>" onclick="return confirm('Hapus buku dari transaksi ini?')" class="btn btn-danger btn-sm">Hapus</a></td>
+                        <?php else: ?><td>-</td><td>-</td><?php endif; ?>
+                    </tr>
+                <?php endwhile; mysqli_stmt_close($stmt); ?>
+                <?php if (!$hasDetails): ?><tr><td colspan="10" class="text-center">Belum ada buku pada transaksi ini.</td></tr><?php endif; ?>
+                </tbody>
+            </table></div>
+        </div></div>
+    <?php endif; ?>
 </div>
-<?php 
-include "footer.php";
-?>
-<script language="javascript">
-function isNumber(event){
-  var charCode = (event.which) ? event.which : event.keyCode;
-  if (charCode > 31 && (charCode < 48 || charCode > 57))
-   return false;
- return true;
-}
+
+<?php if (!$isCreate && empty($loan['tgl_kembali'])): ?>
+<div id="modalBuku" class="modal fade" role="dialog"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">Tambah Buku</h4></div>
+    <form method="post" action="simpan_detil_pinjam.php?id=<?php echo $peminjamanId; ?>">
+        <?php echo csrf_field(); ?>
+        <div class="modal-body">
+            <div class="form-group"><label>Nama Buku</label><select class="form-control" name="idbuku" required>
+                <?php $bookCount = 0; while ($book = mysqli_fetch_assoc($availableBooks)): $bookCount++; ?>
+                    <option value="<?php echo (int) $book['id_t_buku']; ?>"><?php echo e($book['nama_buku']); ?> (stok: <?php echo (int) $book['stok']; ?>)</option>
+                <?php endwhile; ?>
+            </select><?php if ($bookCount === 0): ?><p class="help-block text-danger">Tidak ada buku dengan stok tersedia.</p><?php endif; ?></div>
+            <div class="form-group"><label>Qty</label><input name="qty" type="number" min="1" max="99" class="form-control" required></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary" <?php echo $bookCount === 0 ? 'disabled' : ''; ?>>Simpan</button></div>
+    </form>
+</div></div></div>
+<?php endif; ?>
+
+<?php if ($isCreate): ?>
+<script>
+$(function () {
+    $('#noanggota').autocomplete({source: <?php echo json_encode($memberNumbers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>});
+});
 </script>
-<script type="text/javascript">
-$(document).ready(function() {
-		/*$("#btnsubmit").click(function() {
-			alert("masuk sini");
-		var no_anggota = $("#noanggota").val();
-		//var no_peminjaman = $("#email").val();
-		if (no_anggota == '') {
-		alert("kesalahan");
-		} else {
-		// Returns successful data submission message when the entered information is stored in database.
-		$.post("simpan_peminjaman.php", {
-		no_anggota1: no_anggota
-		}, function(data) {
-		alert(data);
-		$('#formpinjam')[0].reset(); // To reset form fields
-		});
-		}
-		}); */
-	<?php
-	$anggota = array();
-	$buku = array();
-	
-	$sql_anggota = mysqli_query($db, "SELECT no_anggota FROM t_anggota");
-	while(($data_anggota =  mysqli_fetch_assoc($sql_anggota))) {
-		$anggota[] = $data_anggota['no_anggota'];
-	}
-	
-	$sql_buku = mysqli_query($db, "SELECT nama_buku FROM t_buku");
-	while(($data_buku =  mysqli_fetch_assoc($sql_buku))) {
-		$buku[] = $data_buku['nama_buku'];
-	}
-	
-	$php_anggota = $anggota;
-	$php_buku = $buku;
-	
-	$js_anggota = json_encode($php_anggota);
-	$js_buku = json_encode($php_buku);
-	
-	echo "var ar_anggota = ". $js_anggota . ";\n";
-	echo "var ar_buku = ". $js_buku . ";\n";
-	?>
-	
-    $("#noanggota").autocomplete({
-      source: ar_anggota
-    });
-	
-	$("#nmbuku").autocomplete({
-      source: ar_buku
-    });
-  });
-</script>
+<?php endif; ?>
+<?php include __DIR__ . '/footer.php'; ?>

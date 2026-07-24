@@ -1,93 +1,29 @@
 <?php
-	require_once '../setting/koneksi.php';
-	require_once '../setting/session.php';
-	require('../lib/tcpdf/tcpdf.php');
-
-	$usersession = $_SESSION['login_user'];
-	$awal = mysqli_real_escape_string($db,$_POST['tglawal']);
-	$akhir = mysqli_real_escape_string($db,$_POST['tglakhir']);
-	
-	if($awal == null && $akhir == null){
-		$where = "";
-	}else if($awal != null && $akhir == null){
-		$where = " AND tgl_daftar = '$awal'";
-	}else if($awal != null & $akhir != null){
-		$where = " AND tgl_daftar >= '$awal' AND tgl_daftar <= '$akhir' ";
-	}
-	$print_token = md5(uniqid($usersession, true));
-
-	$tgl_cetak = date("Y-m-d h:i:sa");
-	// create new PDF document
-	$pdf = new TCPDF('L', PDF_UNIT, 'A3', true, 'UTF-8', false);
-			
-	// set document information
-	$pdf->SetTitle('Laporan Anggota');
-	$pdf->SetSubject('Laporan Anggota');
-			
-	// set margins
-	$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-	$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-	$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-			
-	// set auto page breaks
-	$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-    // add a page
-	$pdf->AddPage();
-
-	$pdf->SetFont('helvetica', 'B', 26);
-	$pdf->Write(0, 'Laporan Anggota - Perpustakaan 5F', '', 0, 'C', true, 0, false, false, 0);
-	$pdf->Write(0, 'Periode : '.$awal." - ".$akhir, '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 20);
-	$pdf->Write(0, 'Tanggal cetak  : '.$tgl_cetak.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, 'Security Print  : '.$print_token.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 18);
-			
-	$sql = "SELECT * FROM t_anggota WHERE 1=1 $where";
-	//echo $sql;
-	$result = mysqli_query($db,$sql);
-	
-	$isi .= <<<EOD
-				<table border="0.5">
-				<tr>
-					<th><b>No</b></th>
-					<th><b>No Anggota</b></th>
-					<th><b>Nama Anggota</b></th>
-					<th><b>Tanggal Daftar</b></th>
-					<th><b>Tanggal Lahir</b></th>
-					<th><b>Jenis Kelamin</b></th>
-					<th><b>No Telepon</b></th>
-					<th><b>Alamat</b></th>
-					<th><b>Keterangan</b></th>
-					<th><b>Status</b></th>
-				</tr>
-EOD;
-
-	$no = 1;
-			while ($tampil = mysqli_fetch_array($result,MYSQLI_ASSOC)) {
-				$isi.="	 	 	
-					<tr>
-						<td>".$no."</td>
-						<td>".$tampil['no_anggota']."</td>
-						<td>".$tampil['nama']."</td>
-						<td>".$tampil['tgl_daftar']."</td>
-						<td>".$tampil['tgl_lahir']."</td>
-						<td>".$tampil['jenis_kelamin']."</td>
-						<td>".$tampil['no_telp']."</td>
-						<td>".$tampil['alamat']."</td>
-						<td>".$tampil['keterangan']."</td>
-						<td>".$tampil['status']."</td>";
-					$isi .="</tr>";
-					$no++;
-				}
-	$isi.="</table>";
-	
-	$pdf->writeHTML($isi, true, false, false, false, '');
-					
-	$namaPDF = 'Laporan Anggota_'.$tgl_cetak.'.pdf';
-	$pdf->Output($namaPDF,'I');
-?>
+require_once __DIR__ . '/report_helper.php';
+require_roles($db, [1, 2]);
+[$awal, $akhir] = report_request_period();
+$result = report_result(
+    $db,
+    'SELECT no_anggota, nama, tgl_daftar, tgl_lahir, jenis_kelamin, no_telp, alamat, keterangan, status FROM t_anggota',
+    'tgl_daftar',
+    $awal,
+    $akhir
+);
+$pdf = report_pdf('Laporan Anggota - Perpustakaan 5F', report_period_label($awal, $akhir));
+$html = '<table border="0.5" cellpadding="4"><thead><tr style="font-weight:bold;background-color:#eeeeee">'
+    . '<th width="4%">No</th><th width="11%">No Anggota</th><th width="15%">Nama</th><th width="9%">Daftar</th>'
+    . '<th width="9%">Lahir</th><th width="8%">JK</th><th width="11%">Telepon</th><th width="16%">Alamat</th><th width="10%">Ket.</th><th width="7%">Status</th>'
+    . '</tr></thead><tbody>';
+$no = 1;
+while ($row = mysqli_fetch_assoc($result)) {
+    $html .= '<tr><td>' . $no++ . '</td><td>' . pdf_escape($row['no_anggota']) . '</td><td>' . pdf_escape($row['nama']) . '</td>'
+        . '<td>' . pdf_escape($row['tgl_daftar']) . '</td><td>' . pdf_escape($row['tgl_lahir']) . '</td><td>' . pdf_escape($row['jenis_kelamin']) . '</td>'
+        . '<td>' . pdf_escape($row['no_telp']) . '</td><td>' . pdf_escape($row['alamat']) . '</td><td>' . pdf_escape($row['keterangan']) . '</td><td>' . pdf_escape($row['status']) . '</td></tr>';
+}
+if ($no === 1) {
+    $html .= '<tr><td colspan="10" align="center">Tidak ada data.</td></tr>';
+}
+$html .= '</tbody></table>';
+$pdf->SetFont('helvetica', '', 7.5);
+$pdf->writeHTML($html, true, false, false, false, '');
+$pdf->Output(safe_pdf_filename('Laporan_Anggota'), 'I');

@@ -1,157 +1,159 @@
 <?php
-	require_once '../setting/koneksi.php';
-	require_once '../setting/session.php';
-	$id_dp = mysqli_real_escape_string($db,$_GET['id']);
-	$id_pj = mysqli_real_escape_string($db,$_GET['id_pj']);
-	
-	$usersession = $_SESSION['login_user'];
+require_once __DIR__ . '/../setting/session.php';
+$account = require_roles($db, [1, 2], 'dashboard.php');
 
-if ($id_dp != null){
-	
-	$sql_data = "SELECT * FROM v_detil_pinjam WHERE id_t_detil_pinjam = $id_dp ";
-	//echo $sql_data;
-	$result_data = mysqli_query($db,$sql_data);
-	$tampil_data = mysqli_fetch_array($result_data,MYSQLI_ASSOC);
-
-	if($tampil_data['kondisi'] == "Rusak") {
-		$rusak = "selected=selected";
-		}else if($tampil_data['kondisi'] == "Bagus") {
-				$bagus = "selected=selected";
-			}else if($tampil_data['kondisi'] == "Hilang") {
-				$hilang = "selected=selected";
-			}
-}else{
-	header('location:data_peminjaman.php');
+$detailId = request_int($_GET, 'id');
+$peminjamanId = request_int($_GET, 'id_pj');
+if ($detailId <= 0 || $peminjamanId <= 0) {
+    redirect_to('data_peminjaman.php');
 }
 
-if(isset($_POST['btnsubmit'])) {
-	//$tgl_kembali = $_POST['tglkembali'];
-	$kondisi = $_POST['kondisi'];
-	$keterangan = $_POST['keterangan'];
-	
-	if($kondisi == "Bagus"){
-		$denda = 0;
-	}else if($kondisi == "Rusak"){
-			$denda = $tampil_data['harga']*30/100;
-		}else if($kondisi == "Hilang"){
-				$denda = $tampil_data['harga'];
-	}
-	
-	if ($id_dp == null){
-		header('location:data_peminjaman.php');
-	}else{
-
-		$query = "UPDATE t_detil_pinjam SET tgl_kembali = curdate(), kondisi = '$kondisi',keterangan = '$keterangan',
-				  denda = $denda, update_date = curdate(),update_by = '$usersession' 
-				  WHERE id_t_detil_pinjam= $id_dp";
-		$db->query($query);
-		
-		$query_pj = "UPDATE t_peminjaman SET tgl_kembali = curdate(), update_date = curdate(),update_by = '$usersession' 
-				  WHERE id_t_peminjaman = $id_pj";
-		$db->query($query_pj);
-		
-		
-		//update stok buku
-		$qty = $tampil_data['qty'];
-		$idbuku = $tampil_data['id_t_buku'];
-		
-		if($kondisi == "Bagus" || $kondisi == "Rusak"){
-			$query_stok = "UPDATE t_buku SET stok = stok+$qty WHERE id_t_buku = $idbuku";
-		}else if($kondisi == "Hilang"){
-			$query_stok = "UPDATE t_buku SET stok = stok-$qty WHERE id_t_buku = $idbuku";
-		}
-		//echo $query_stok;
-		$db->query($query_stok);
-		//echo $query;
-	
-		$db->close();
-		header('location:input_peminjaman.php?id='.$id_pj);
-	}
+function load_loan_detail(mysqli $db, int $detailId, int $peminjamanId): ?array
+{
+    $stmt = mysqli_prepare($db, 'SELECT * FROM v_detil_pinjam WHERE id_t_detil_pinjam = ? AND id_t_peminjaman = ? LIMIT 1');
+    mysqli_stmt_bind_param($stmt, 'ii', $detailId, $peminjamanId);
+    mysqli_stmt_execute($stmt);
+    $data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+    mysqli_stmt_close($stmt);
+    return $data;
 }
-include("header.php");	
+
+$tampil_data = load_loan_detail($db, $detailId, $peminjamanId);
+if (!$tampil_data) {
+    redirect_to('input_peminjaman.php?id=' . $peminjamanId);
+}
+
+$error = '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf($_POST['csrf_token'] ?? null);
+
+    $kondisi = request_string($_POST, 'kondisi');
+    $keterangan = request_string($_POST, 'keterangan');
+    $allowedConditions = ['Bagus', 'Rusak', 'Hilang'];
+
+    if (!in_array($kondisi, $allowedConditions, true)) {
+        $error = 'Kondisi buku tidak valid.';
+    } elseif (!empty($tampil_data['tgl_kembali'])) {
+        $error = 'Buku ini sudah dikembalikan.';
+    } else {
+        $harga = (int) $tampil_data['harga'];
+        $qty = (int) $tampil_data['qty'];
+        $bukuId = (int) $tampil_data['id_t_buku'];
+        $denda = 0;
+
+        if ($kondisi === 'Rusak') {
+            $denda = (int) round($harga * 0.30) * $qty;
+        } elseif ($kondisi === 'Hilang') {
+            $denda = $harga * $qty;
+        }
+
+        mysqli_begin_transaction($db);
+        try {
+            $lock = mysqli_prepare($db, 'SELECT tgl_kembali FROM t_detil_pinjam WHERE id_t_detil_pinjam = ? AND id_t_peminjaman = ? FOR UPDATE');
+            mysqli_stmt_bind_param($lock, 'ii', $detailId, $peminjamanId);
+            mysqli_stmt_execute($lock);
+            $lockedDetail = mysqli_fetch_assoc(mysqli_stmt_get_result($lock));
+            mysqli_stmt_close($lock);
+
+            if (!$lockedDetail || !empty($lockedDetail['tgl_kembali'])) {
+                throw new RuntimeException('Detail sudah diproses oleh pengguna lain.');
+            }
+
+            $username = (string) $account['username'];
+            $update = mysqli_prepare($db, 'UPDATE t_detil_pinjam SET tgl_kembali = NOW(), kondisi = ?, keterangan = ?, denda = ?, update_date = NOW(), update_by = ? WHERE id_t_detil_pinjam = ?');
+            mysqli_stmt_bind_param($update, 'ssisi', $kondisi, $keterangan, $denda, $username, $detailId);
+            if (!mysqli_stmt_execute($update)) {
+                throw new RuntimeException(mysqli_stmt_error($update));
+            }
+            mysqli_stmt_close($update);
+
+            // Buku bagus/rusak kembali menjadi stok. Buku hilang tidak dikurangi lagi
+            // karena stoknya sudah berkurang saat peminjaman dibuat.
+            if ($kondisi === 'Bagus' || $kondisi === 'Rusak') {
+                $stock = mysqli_prepare($db, 'UPDATE t_buku SET stok = stok + ? WHERE id_t_buku = ?');
+                mysqli_stmt_bind_param($stock, 'ii', $qty, $bukuId);
+                mysqli_stmt_execute($stock);
+                mysqli_stmt_close($stock);
+            }
+
+            $summary = mysqli_prepare($db, 'SELECT SUM(CASE WHEN tgl_kembali IS NULL THEN 1 ELSE 0 END) AS belum_kembali, COALESCE(SUM(denda), 0) AS total_denda FROM t_detil_pinjam WHERE id_t_peminjaman = ?');
+            mysqli_stmt_bind_param($summary, 'i', $peminjamanId);
+            mysqli_stmt_execute($summary);
+            $loanSummary = mysqli_fetch_assoc(mysqli_stmt_get_result($summary));
+            mysqli_stmt_close($summary);
+
+            $pending = (int) ($loanSummary['belum_kembali'] ?? 0);
+            $totalDenda = (int) ($loanSummary['total_denda'] ?? 0);
+            if ($pending === 0) {
+                $loanUpdate = mysqli_prepare($db, 'UPDATE t_peminjaman SET tgl_kembali = CURDATE(), total_denda = ?, update_date = CURDATE(), update_by = ? WHERE id_t_peminjaman = ?');
+            } else {
+                $loanUpdate = mysqli_prepare($db, 'UPDATE t_peminjaman SET tgl_kembali = NULL, total_denda = ?, update_date = CURDATE(), update_by = ? WHERE id_t_peminjaman = ?');
+            }
+            mysqli_stmt_bind_param($loanUpdate, 'isi', $totalDenda, $username, $peminjamanId);
+            mysqli_stmt_execute($loanUpdate);
+            mysqli_stmt_close($loanUpdate);
+
+            mysqli_commit($db);
+            redirect_to('input_peminjaman.php?id=' . $peminjamanId);
+        } catch (Throwable $exception) {
+            mysqli_rollback($db);
+            error_log($exception->getMessage());
+            $error = 'Pengembalian gagal disimpan. Silakan coba kembali.';
+        }
+    }
+}
+
+include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-	<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header">Edit Detil Peminjaman</h1>
+    <div class="row">
+        <div class="col-lg-12"><h1 class="page-header">Pengembalian Buku</h1></div>
+    </div>
+    <div class="row">
+        <div class="col-lg-6">
+            <?php if ($error !== ''): ?>
+                <div class="alert"><span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span><?php echo e($error); ?></div>
+            <?php endif; ?>
+            <form class="form-horizontal" method="post">
+                <?php echo csrf_field(); ?>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Nama Buku</label>
+                    <div class="col-sm-8"><p class="form-control-static"><?php echo e($tampil_data['nama_buku']); ?></p></div>
                 </div>
-                <!-- /.col-lg-12 -->
-	</div>
-	
-	<div class="row">
-		<div class="col-lg-6">
-			<form class="form-horizontal" method="post">
-				<div class="form-group">
-					<label class="control-label col-sm-4">Nama Buku</label>
-					<div class="col-sm-8">
-					<label class="control-label col-sm-4"><?php echo $tampil_data['nama_buku'];?></label>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Penulis</label>
-					<div class="col-sm-8">
-					<label class="control-label col-sm-4"><?php echo $tampil_data['penulis'];?></label>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Harga</label>
-					<div class="col-sm-8">
-					<label class="control-label col-sm-4"><?php echo $tampil_data['harga'];?></label>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Qty</label>
-					<div class="col-sm-8">
-					<label class="control-label col-sm-4"><?php echo $tampil_data['qty'];?></label>
-					</div>
-				</div>
-				<!--<div class="form-group">
-					<label class="control-label col-sm-4">Tanggal Kembali</label>
-					<div class="col-sm-8">
-					<input type="text" maxlength="25" class="form-control" name="tglkembali" 
-							value="<?php //echo $tampil_data['tgl_kembali'];?>" id="tglkembali" required  />
-					</div>
-				</div> -->
-				<div class="form-group">
-					<label class="control-label col-sm-4">Kondisi</label>
-					<div class="col-sm-8">
-						<select name="kondisi" class="form-control">
-                            <option <?php echo $rusak;?> >Rusak</option>
-                            <option <?php echo $bagus;?> >Bagus</option>
-							<option <?php echo $hilang;?> >Hilang</option>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Penulis</label>
+                    <div class="col-sm-8"><p class="form-control-static"><?php echo e($tampil_data['penulis']); ?></p></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Harga</label>
+                    <div class="col-sm-8"><p class="form-control-static">Rp <?php echo number_format((int) $tampil_data['harga'], 0, ',', '.'); ?></p></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Qty</label>
+                    <div class="col-sm-8"><p class="form-control-static"><?php echo (int) $tampil_data['qty']; ?></p></div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Kondisi</label>
+                    <div class="col-sm-8">
+                        <select name="kondisi" class="form-control" required>
+                            <?php foreach (['Bagus', 'Rusak', 'Hilang'] as $option): ?>
+                                <option value="<?php echo $option; ?>" <?php echo (($tampil_data['kondisi'] ?? '') === $option) ? 'selected' : ''; ?>><?php echo $option; ?></option>
+                            <?php endforeach; ?>
                         </select>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Keterangan</label>
-					<div class="col-sm-8">
-					<textarea name="keterangan" class="form-control" rows="3"><?php echo htmlspecialchars($tampil_data['keterangan']); ?></textarea>
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="control-label col-sm-4">Denda</label>
-					<div class="col-sm-8">
-					<label class="control-label col-sm-4"><?php echo $tampil_data['denda'];?></label>
-					</div>
-				</div>
-				<div class="form-group" align="right">
-				<div class="col-sm-4">
-				<!-- sengaja dikosongin :D-->
-				</div>
-				<div class="col-sm-8">
-					<a href="input_peminjaman.php?id=<?php echo $id_pj;?>" class="btn btn-default">Kembali</a>
-					<button type="submit" name="btnsubmit" class="btn btn-primary">Simpan</button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Keterangan</label>
+                    <div class="col-sm-8"><textarea name="keterangan" maxlength="64" class="form-control" rows="3"><?php echo e($tampil_data['keterangan']); ?></textarea></div>
+                </div>
+                <div class="form-group text-right">
+                    <div class="col-sm-offset-4 col-sm-8">
+                        <a href="input_peminjaman.php?id=<?php echo $peminjamanId; ?>" class="btn btn-default">Kembali</a>
+                        <button type="submit" class="btn btn-primary">Simpan Pengembalian</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-<?php 
-include "footer.php";
-?>
-<script type="text/javascript">
-		$(document).ready(function(e) {
-		$("#tglkembali").datepicker({dateFormat: "yy-mm-dd"});
-	});
-</script>
+<?php include __DIR__ . '/footer.php'; ?>

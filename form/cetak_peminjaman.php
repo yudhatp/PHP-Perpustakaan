@@ -1,89 +1,57 @@
 <?php
-	require_once '../setting/koneksi.php';
-	require_once '../setting/session.php';
-	require('../lib/tcpdf/tcpdf.php');
-
-	$usersession = $_SESSION['login_user'];
-	$awal = mysqli_real_escape_string($db,$_POST['tglawal']);
-	$akhir = mysqli_real_escape_string($db,$_POST['tglakhir']);
-	
-	if($awal == null && $akhir == null){
-		$where = "";
-	}else if($awal != null && $akhir == null){
-		$where = " AND tgl_pinjam = '$awal'";
-	}else if($awal != null & $akhir != null){
-		$where = " AND tgl_pinjam >= '$awal' AND tgl_pinjam <= '$akhir' ";
-	}
-	$print_token = md5(uniqid($usersession, true));
-
-	$tgl_cetak = date("Y-m-d h:i:sa");
-	// create new PDF document
-	$pdf = new TCPDF('L', PDF_UNIT, 'A3', true, 'UTF-8', false);
-			
-	// set document information
-	$pdf->SetTitle('Laporan Peminjaman');
-	$pdf->SetSubject('Laporan Peminjaman');
-			
-	// set margins
-	$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-	$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-	$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-			
-	// set auto page breaks
-	$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-    // add a page
-	$pdf->AddPage();
-
-	$pdf->SetFont('helvetica', 'B', 26);
-	$pdf->Write(0, 'Laporan Peminjaman - Perpustakaan 5F', '', 0, 'C', true, 0, false, false, 0);
-	$pdf->Write(0, 'Periode : '.$awal." - ".$akhir, '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 20);
-	$pdf->Write(0, 'Tanggal cetak  : '.$tgl_cetak.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, 'Security Print  : '.$print_token.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 18);
-			
-	$sql = "SELECT * FROM v_peminjaman WHERE 1=1 $where";
-	//echo $sql;
-	$result = mysqli_query($db,$sql);
-	
-	$isi .= <<<EOD
-				<table border="0.5">
-				<tr>
-					<th><b>No</b></th>
-					<th><b>No Peminjaman</b></th>
-					<th><b>Staff</b></th>
-					<th><b>Tanggal Pinjam</b></th>
-					<th><b>Tanggal Kembali</b></th>
-					<th><b>No Anggota</b></th>
-					<th><b>Nama Anggota</b></th>
-					<th><b>Jumlah Buku</b></th>
-				</tr>
-EOD;
-
-	$no = 1;
-			while ($tampil = mysqli_fetch_array($result,MYSQLI_ASSOC)) {
-				$isi.="	 	 	
-					<tr>
-						<td>".$no."</td>
-						<td>".$tampil['no_peminjaman']."</td>
-						<td>".$tampil['staff']."</td>
-						<td>".$tampil['tgl_pinjam']."</td>
-						<td>".$tampil['tgl_kembali']."</td>
-						<td>".$tampil['no_anggota']."</td>
-						<td>".$tampil['anggota']."</td>
-						<td>".$tampil['jum']."</td>";
-					$isi .="</tr>";
-					$no++;
-				}
-	$isi.="</table>";
-	
-	$pdf->writeHTML($isi, true, false, false, false, '');
-					
-	$namaPDF = 'Laporan Peminjaman_'.$tgl_cetak.'.pdf';
-	$pdf->Output($namaPDF,'I');
-?>
+require_once __DIR__ . '/report_helper.php';
+require_roles($db, [1, 2]);
+[$awal, $akhir] = report_request_period();
+$baseSql = "SELECT p.no_peminjaman, COALESCE(s.nama, 'Admin') AS staff, p.tgl_pinjam, p.tgl_kembali, a.no_anggota, a.nama AS anggota, COALESCE(SUM(d.qty), 0) AS jumlah_buku, COALESCE(p.total_denda, 0) AS total_denda
+    FROM t_peminjaman p
+    JOIN t_anggota a ON a.id_t_anggota = p.id_t_anggota
+    LEFT JOIN t_staff s ON s.id_t_staff = p.id_t_staff
+    LEFT JOIN t_detil_pinjam d ON d.id_t_peminjaman = p.id_t_peminjaman";
+$conditions = [];
+$params = [];
+$types = '';
+if ($awal !== '' && $akhir !== '') {
+    $conditions[] = 'p.tgl_pinjam BETWEEN ? AND ?';
+    $types = 'ss';
+    $params = [$awal, $akhir];
+} elseif ($awal !== '') {
+    $conditions[] = 'p.tgl_pinjam = ?';
+    $types = 's';
+    $params = [$awal];
+} elseif ($akhir !== '') {
+    $conditions[] = 'p.tgl_pinjam <= ?';
+    $types = 's';
+    $params = [$akhir];
+}
+$sql = $baseSql . ($conditions ? ' WHERE ' . implode(' AND ', $conditions) : '')
+    . ' GROUP BY p.id_t_peminjaman, p.no_peminjaman, s.nama, p.tgl_pinjam, p.tgl_kembali, a.no_anggota, a.nama, p.total_denda ORDER BY p.tgl_pinjam DESC, p.id_t_peminjaman DESC';
+$stmt = mysqli_prepare($db, $sql);
+if (!$stmt) {
+    http_response_code(500);
+    exit('Gagal menyiapkan laporan peminjaman.');
+}
+if ($types === 'ss') {
+    mysqli_stmt_bind_param($stmt, 'ss', $params[0], $params[1]);
+} elseif ($types === 's') {
+    mysqli_stmt_bind_param($stmt, 's', $params[0]);
+}
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+$pdf = report_pdf('Laporan Peminjaman - Perpustakaan 5F', report_period_label($awal, $akhir));
+$html = '<table border="0.5" cellpadding="4"><thead><tr style="font-weight:bold;background-color:#eeeeee">'
+    . '<th width="5%">No</th><th width="14%">No Peminjaman</th><th width="12%">Staff</th><th width="10%">Pinjam</th><th width="10%">Kembali</th>'
+    . '<th width="12%">No Anggota</th><th width="17%">Anggota</th><th width="8%">Buku</th><th width="12%">Denda</th>'
+    . '</tr></thead><tbody>';
+$no = 1;
+while ($row = mysqli_fetch_assoc($result)) {
+    $html .= '<tr><td>' . $no++ . '</td><td>' . pdf_escape($row['no_peminjaman']) . '</td><td>' . pdf_escape($row['staff']) . '</td>'
+        . '<td>' . pdf_escape($row['tgl_pinjam']) . '</td><td>' . pdf_escape($row['tgl_kembali']) . '</td><td>' . pdf_escape($row['no_anggota']) . '</td>'
+        . '<td>' . pdf_escape($row['anggota']) . '</td><td>' . (int) $row['jumlah_buku'] . '</td><td>' . pdf_escape(pdf_money($row['total_denda'])) . '</td></tr>';
+}
+if ($no === 1) {
+    $html .= '<tr><td colspan="9" align="center">Tidak ada data.</td></tr>';
+}
+$html .= '</tbody></table>';
+$pdf->SetFont('helvetica', '', 8);
+$pdf->writeHTML($html, true, false, false, false, '');
+$pdf->Output(safe_pdf_filename('Laporan_Peminjaman'), 'I');

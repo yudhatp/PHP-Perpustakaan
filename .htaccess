@@ -1,0 +1,12 @@
+<IfModule mod_authz_core.c>
+    <FilesMatch "^\.(env|git)">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^\.(env|git)">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>

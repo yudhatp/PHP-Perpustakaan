@@ -1,85 +1,22 @@
 <?php
-require_once '../setting/koneksi.php';
-include("header.php");	
-
-$id_bk = mysqli_real_escape_string($db,$_GET['id']);
-	//$usersession = $_SESSION['login_user'];
-
-if($id_bk == null){
-	header('location:data_buku.php');
-}else{
-	$sql = "SELECT * FROM t_buku WHERE id_t_buku = $id_bk ";
-	$result = mysqli_query($db,$sql);
-	$tampil = mysqli_fetch_array($result,MYSQLI_ASSOC);
-	//echo $sql;
+require_once __DIR__ . '/../setting/session.php';
+require_login($db, '../index.php');
+$bukuId = request_int($_GET, 'id');
+if ($bukuId <= 0) {
+    redirect_to('data_buku.php');
 }
-
-
+$stmt = mysqli_prepare($db, 'SELECT * FROM t_buku WHERE id_t_buku = ? LIMIT 1');
+mysqli_stmt_bind_param($stmt, 'i', $bukuId);
+mysqli_stmt_execute($stmt);
+$book = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+mysqli_stmt_close($stmt);
+if (!$book) {
+    redirect_to('data_buku.php');
+}
+include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-	<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header">Sinopsis Buku</h1>
-                </div>
-                <!-- /.col-lg-12 -->
-	</div>
-	
-	<div class="row">
-		<div class="col-sm-4">
-			<img src="<?php echo "../image/buku/".$tampil['gambar'];?>" align="left" width="400" height="500">
-		</div>
-		<div class="col-sm-8">
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Judul</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['nama_buku'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Jenis</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['jenis'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Penulis</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['penulis'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Penerbit</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['penerbit'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Tahun Terbit</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['tahun_terbit'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Sinopsis</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['sinopsis'] ?? ''; ?></p>
-				</div>
-			</div>
-		</div>
-	</div>
-	<hr>
-	<div class="row">
-		<div class="col-sm-8">
-			<a href="data_buku.php" class="btn btn-primary">Kembali</a>
-		</div>
-	</div>
-	<br>
+    <div class="row"><div class="col-lg-12"><h1 class="page-header">Detail Buku</h1></div></div>
+    <div class="row"><div class="col-md-3"><?php if (!empty($book['gambar'])): ?><img class="img-responsive img-thumbnail" src="../image/buku/<?php echo rawurlencode(basename($book['gambar'])); ?>" alt="Cover <?php echo e($book['nama_buku']); ?>"><?php endif; ?></div><div class="col-md-9"><h3><?php echo e($book['nama_buku']); ?></h3><p><strong>Penulis:</strong> <?php echo e($book['penulis']); ?></p><p><strong>Penerbit:</strong> <?php echo e($book['penerbit']); ?></p><p><strong>Tahun:</strong> <?php echo e($book['tahun_terbit']); ?></p><p><strong>Jenis:</strong> <?php echo e($book['jenis']); ?></p><p><strong>Rak/Stok:</strong> <?php echo e($book['kode_rak']); ?> / <?php echo (int) $book['stok']; ?></p><hr><p><?php echo nl2br(e($book['sinopsis'] ?: '-')); ?></p><a href="data_buku.php" class="btn btn-default">Kembali</a></div></div>
 </div>
-<?php
-include("footer.php");
-?>
+<?php include __DIR__ . '/footer.php'; ?>

@@ -1,59 +1,46 @@
 <?php
-	require_once '../setting/koneksi.php';
-	require_once '../setting/session.php';
-	require('../lib/tcpdf/tcpdf.php');
+require_once __DIR__ . '/report_helper.php';
+$account = require_roles($db, [1, 2, 3]);
+$anggotaId = request_int($_GET, 'id');
+if ($anggotaId < 1) {
+    http_response_code(400);
+    exit('ID anggota tidak valid.');
+}
 
-	$usersession = $_SESSION['login_user'];
-	$id = mysqli_real_escape_string($db,$_GET['id']);
-	$print_token = md5(uniqid($usersession, true));
+$stmt = mysqli_prepare($db, 'SELECT a.id_t_anggota, a.id_t_account, a.no_anggota, a.nama, a.tgl_daftar, a.tgl_lahir, a.jenis_kelamin,
+        a.no_telp, a.alamat, a.status, r.nama_role
+    FROM t_anggota a
+    JOIN t_account ac ON ac.id_t_account = a.id_t_account
+    JOIN p_role r ON r.id_p_role = ac.id_p_role
+    WHERE a.id_t_anggota = ? LIMIT 1');
+mysqli_stmt_bind_param($stmt, 'i', $anggotaId);
+mysqli_stmt_execute($stmt);
+$member = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+mysqli_stmt_close($stmt);
 
-	$tgl_cetak = date("Y-m-d h:i:sa");
-	// create new PDF document
-	$pdf = new TCPDF('L', PDF_UNIT, 'A3', true, 'UTF-8', false);
-			
-	// set document information
-	$pdf->SetTitle('Cetak Kartu Anggota');
-	$pdf->SetSubject('Cetak Kartu Anggota');
-			
-	// set margins
-	$pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
-	$pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
-	$pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
-			
-	// set auto page breaks
-	$pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
-    // add a page
-	$pdf->AddPage();
+if (!$member) {
+    http_response_code(404);
+    exit('Data anggota tidak ditemukan.');
+}
+if ((int) $account['id_p_role'] === 3 && (int) $member['id_t_account'] !== (int) $account['id_t_account']) {
+    http_response_code(403);
+    exit('Anda tidak memiliki akses ke kartu anggota ini.');
+}
 
-	$pdf->SetFont('helvetica', 'B', 26);
-	$pdf->Write(0, 'Kartu Anggota - Perpustakaan 5F', '', 0, 'C', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 20);
-	$pdf->Write(0, 'Tanggal cetak  : '.$tgl_cetak.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, 'Security Print  : '.$print_token.'', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-	$pdf->Write(0, '', '', 0, 'L', true, 0, false, false, 0);
-			
-	$pdf->SetFont('helvetica', '', 18);
-			
-	$sql = "SELECT B.no_anggota, B.nama, C.nama_role, A.create_date AS tgl_register, 
-						IFNULL(A.update_date,'-') AS last_change_pass,
-						IFNULL(B.update_date,'-') AS last_change_profile
-						FROM t_account A 
-						JOIN t_anggota B ON A.id_t_account = B.id_t_account 
-						JOIN P_ROLE C ON A.id_p_role = C.id_p_role
-						WHERE B.id_t_anggota =".$id."";
-			
-	$result = mysqli_query($db,$sql);
-	$tampil = mysqli_fetch_array($result,MYSQLI_ASSOC);
-	
-	$isi = "No Anggota : ".$tampil['no_anggota']." <br>";
-	$isi .= "Nama Anggota : ".$tampil['nama']." <br>";
-	$isi .= "Tanggal Daftar : ".$tampil['tgl_register']." <br><br>";
-	
-	$pdf->writeHTML($isi, true, false, false, false, '');
-					
-	$namaPDF = 'Kartu Anggota_'.$usersession.'.pdf';
-	$pdf->Output($namaPDF,'I');
-?>
+$pdf = report_pdf('Kartu Anggota - Perpustakaan 5F', '', 'P');
+$pdf->SetFont('helvetica', '', 11);
+$status = strtolower((string) $member['status']) === 'aktif' ? 'AKTIF' : strtoupper((string) $member['status']);
+$html = '<div style="border:1px solid #333;padding:18px">'
+    . '<h2 style="text-align:center">KARTU ANGGOTA</h2>'
+    . '<p style="text-align:center;font-size:15px"><b>' . pdf_escape($member['no_anggota']) . '</b></p>'
+    . '<table cellpadding="5">'
+    . '<tr><td width="32%"><b>Nama</b></td><td width="68%">: ' . pdf_escape($member['nama']) . '</td></tr>'
+    . '<tr><td><b>Tanggal Daftar</b></td><td>: ' . pdf_escape($member['tgl_daftar']) . '</td></tr>'
+    . '<tr><td><b>Tanggal Lahir</b></td><td>: ' . pdf_escape($member['tgl_lahir']) . '</td></tr>'
+    . '<tr><td><b>Jenis Kelamin</b></td><td>: ' . pdf_escape($member['jenis_kelamin']) . '</td></tr>'
+    . '<tr><td><b>No. Telepon</b></td><td>: ' . pdf_escape($member['no_telp']) . '</td></tr>'
+    . '<tr><td><b>Alamat</b></td><td>: ' . pdf_escape($member['alamat']) . '</td></tr>'
+    . '<tr><td><b>Status</b></td><td>: <b>' . pdf_escape($status) . '</b></td></tr>'
+    . '</table></div>';
+$pdf->writeHTML($html, true, false, false, false, '');
+$pdf->Output(safe_pdf_filename('Kartu_' . $member['no_anggota']), 'I');

@@ -1,136 +1,48 @@
 <?php
-include("header.php");	
-$id_pj = mysqli_real_escape_string($db,$_GET['id']);
-$usersession = $_SESSION['login_user'];
-
-if ($id_pj != null){
-	$judul = "Detil Peminjaman";
-	
-	$sql = "select id_p_role, id_t_account from t_account where username = '$usersession' ";
-	$result = mysqli_query($db,$sql);
-	$row = mysqli_fetch_array($result,MYSQLI_ASSOC);
-	$idnya = $row['id_t_account'];
-	$roleid = $row['id_p_role'];
-}else{
-	header('location:data_peminjaman.php');
+require_once __DIR__ . '/../setting/session.php';
+$account = require_login($db, '../index.php');
+$peminjamanId = request_int($_GET, 'id');
+if ($peminjamanId <= 0) {
+    redirect_to('dashboard.php');
 }
+
+$sql = "SELECT p.id_t_peminjaman, p.no_peminjaman, p.tgl_pinjam, p.tgl_kembali, p.total_denda,
+               p.id_t_anggota, a.no_anggota, a.nama AS anggota, a.id_t_account,
+               COALESCE(s.nama, 'Admin') AS staff
+        FROM t_peminjaman p
+        JOIN t_anggota a ON a.id_t_anggota = p.id_t_anggota
+        LEFT JOIN t_staff s ON s.id_t_staff = p.id_t_staff
+        WHERE p.id_t_peminjaman = ? LIMIT 1";
+$stmt = mysqli_prepare($db, $sql);
+mysqli_stmt_bind_param($stmt, 'i', $peminjamanId);
+mysqli_stmt_execute($stmt);
+$loan = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+mysqli_stmt_close($stmt);
+if (!$loan) {
+    redirect_to('dashboard.php');
+}
+
+if ((int) $account['id_p_role'] === 3 && (int) $loan['id_t_account'] !== (int) $account['id_t_account']) {
+    redirect_to('dashboard.php');
+}
+
+$stmt = mysqli_prepare($db, 'SELECT * FROM v_detil_pinjam WHERE id_t_peminjaman = ? ORDER BY id_t_detil_pinjam ASC');
+mysqli_stmt_bind_param($stmt, 'i', $peminjamanId);
+mysqli_stmt_execute($stmt);
+$details = mysqli_stmt_get_result($stmt);
+
+include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-	<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header"><?php echo $judul;?></h1>
-                </div>
-                <!-- /.col-lg-12 -->
-	</div>
-	
-	<div class="row">
-		<div class="col-lg-12">
-		  <?php
-			$sql_pj = "SELECT * FROM v_peminjaman WHERE id_t_peminjaman = $id_pj";
-			
-			$result_pj = mysqli_query($db,$sql_pj);
-			
-			$tampil = mysqli_fetch_array($result_pj,MYSQLI_ASSOC);
-				?>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">No Peminjaman</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['no_peminjaman'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Nama Staff</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['staff'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Tanggal Pinjam</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['tgl_pinjam'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Tanggal Kembali</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['tgl_kembali'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">No Anggota</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['no_anggota'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Nama Anggota</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['anggota'] ?? ''; ?></p>
-				</div>
-			</div>
-
-			<div class="row">
-				<label class="col-sm-2 col-form-label">Jumlah Buku</label>
-				<div class="col-sm-6">
-					<p><?php echo $tampil['jum'] ?? '0'; ?></p>
-				</div>
-			</div>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-lg-12">
-		<table class="table table-striped table-bordered table-hover">
-			<tr>
-				<th>No</th>
-				<th>Nama Buku</th>
-				<th>Penulis</th>
-				<th>Harga</th>
-				<th>Tanggal Kembali</th>
-				<th>Qty</th>
-			</tr>
-		  <?php
-			$sql_det = "SELECT * FROM v_detil_pinjam WHERE id_t_peminjaman = $id_pj";
-			//echo $sql_det;
-			$result_det = mysqli_query($db,$sql_det);
-			$no = 1;
-			while($tampil_det = mysqli_fetch_array($result_det,MYSQLI_ASSOC))
-			{
-				?>
-					<tr>
-						<td><?php echo $no;?></td>
-						<td><?php echo $tampil_det['nama_buku']; ?></td>
-						<td><?php echo $tampil_det['penulis']; ?></td>
-						<td><?php echo $tampil_det['harga']; ?></td>
-						<td><?php echo $tampil_det['tgl_kembali']; ?></td>
-						<td><?php echo $tampil_det['qty']; ?></td>
-					</tr>
-				<?php
-				$no++;
-			}
-				?>
-		  </table>
-		</div>
-	</div>
-	<br>
-	<?php
-	if($roleid==3){
-	?>
-	<a href="history_peminjaman.php?id=<?php echo $idnya;?>" class="btn btn-primary">Kembali</a>
-	<?php
-	}else{
-	?>
-	<a href="data_peminjaman.php" class="btn btn-primary">Kembali</a>
-	<?php
-	}
-	?>
+    <div class="row"><div class="col-lg-12"><h1 class="page-header">Detail Peminjaman</h1></div></div>
+    <div class="panel panel-default"><div class="panel-body">
+        <div class="row"><div class="col-md-4"><strong>No Peminjaman</strong><p><?php echo e($loan['no_peminjaman']); ?></p></div><div class="col-md-4"><strong>Anggota</strong><p><?php echo e($loan['no_anggota'] . ' - ' . $loan['anggota']); ?></p></div><div class="col-md-4"><strong>Staff</strong><p><?php echo e($loan['staff']); ?></p></div></div>
+        <div class="row"><div class="col-md-4"><strong>Tanggal Pinjam</strong><p><?php echo e($loan['tgl_pinjam']); ?></p></div><div class="col-md-4"><strong>Tanggal Kembali</strong><p><?php echo e($loan['tgl_kembali'] ?: '-'); ?></p></div><div class="col-md-4"><strong>Total Denda</strong><p>Rp <?php echo number_format((int) ($loan['total_denda'] ?? 0), 0, ',', '.'); ?></p></div></div>
+    </div></div>
+    <div class="table-responsive"><table class="table table-striped table-bordered"><thead><tr><th>No</th><th>Buku</th><th>Penulis</th><th>Qty</th><th>Tanggal Kembali</th><th>Kondisi</th><th>Denda</th><th>Keterangan</th></tr></thead><tbody>
+    <?php $no = 1; $hasRows = false; while ($detail = mysqli_fetch_assoc($details)): $hasRows = true; ?><tr><td><?php echo $no++; ?></td><td><?php echo e($detail['nama_buku']); ?></td><td><?php echo e($detail['penulis']); ?></td><td><?php echo (int) $detail['qty']; ?></td><td><?php echo e($detail['tgl_kembali'] ?: '-'); ?></td><td><?php echo e($detail['kondisi'] ?: 'Dipinjam'); ?></td><td>Rp <?php echo number_format((int) ($detail['denda'] ?? 0), 0, ',', '.'); ?></td><td><?php echo e($detail['keterangan']); ?></td></tr><?php endwhile; mysqli_stmt_close($stmt); ?>
+    <?php if (!$hasRows): ?><tr><td colspan="8" class="text-center">Belum ada buku pada transaksi ini.</td></tr><?php endif; ?>
+    </tbody></table></div>
+    <a href="<?php echo (int) $account['id_p_role'] === 3 ? 'history_peminjaman.php?id=' . (int) $loan['id_t_anggota'] : 'data_peminjaman.php'; ?>" class="btn btn-default">Kembali</a>
 </div>
-<?php 
-include "footer.php";
-?>
+<?php include __DIR__ . '/footer.php'; ?>

@@ -1,163 +1,84 @@
 <?php
-include("header.php");
-$where = " WHERE 1=1 ";
+require_once __DIR__ . '/../setting/session.php';
+require_roles($db, [1, 2], 'dashboard.php');
 
-	$txtNo = "";
-	$txtNama = "";
-	$txtTgl = "";
-	
-	if(isset($_GET['txtNo'])){
-		$txtNo = mysqli_real_escape_string($db,$_GET['txtNo']);
-		if($txtNo != ""){
-			$where .= " AND no_peminjaman LIKE '%$txtNo%' ";
-		}
-	}
-	
-	if(isset($_GET['txtNama'])){
-		$txtNama = mysqli_real_escape_string($db,$_GET['txtNama']);
-		if($txtNama != ""){
-			$where .= " AND anggota LIKE '%$txtNama%' ";
-		}
-	}
-	
-	if(isset($_GET['txtTgl'])){
-		$txtTgl = mysqli_real_escape_string($db,$_GET['txtTgl']);
-		if($txtTgl != ""){
-			$where .= " AND tgl_pinjam = '$txtTgl' ";
-		}
-	}
-						
-		
+$nomor = request_string($_GET, 'txtNo');
+$nama = request_string($_GET, 'txtNama');
+$tanggal = request_string($_GET, 'txtTgl');
+$page = max(1, request_int($_GET, 'hal', 1));
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+$where = ['1=1'];
+if ($nomor !== '') {
+    $where[] = "p.no_peminjaman LIKE '%" . mysqli_real_escape_string($db, $nomor) . "%'";
+}
+if ($nama !== '') {
+    $where[] = "a.nama LIKE '%" . mysqli_real_escape_string($db, $nama) . "%'";
+}
+if ($tanggal !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $tanggal)) {
+    $where[] = "p.tgl_pinjam = '" . mysqli_real_escape_string($db, $tanggal) . "'";
+}
+$whereSql = implode(' AND ', $where);
+
+$countSql = "SELECT COUNT(*) AS jumlah FROM t_peminjaman p JOIN t_anggota a ON a.id_t_anggota = p.id_t_anggota WHERE $whereSql";
+$countResult = mysqli_query($db, $countSql);
+$total = (int) (mysqli_fetch_assoc($countResult)['jumlah'] ?? 0);
+$totalPages = max(1, (int) ceil($total / $perPage));
+if ($page > $totalPages) {
+    $page = $totalPages;
+    $offset = ($page - 1) * $perPage;
+}
+
+$sql = "SELECT p.id_t_peminjaman, p.no_peminjaman, COALESCE(s.nama, 'Admin') AS staff,
+               p.tgl_pinjam, p.tgl_kembali, p.total_denda, a.no_anggota, a.nama AS anggota,
+               COALESCE(SUM(d.qty), 0) AS jum
+        FROM t_peminjaman p
+        JOIN t_anggota a ON a.id_t_anggota = p.id_t_anggota
+        LEFT JOIN t_staff s ON s.id_t_staff = p.id_t_staff
+        LEFT JOIN t_detil_pinjam d ON d.id_t_peminjaman = p.id_t_peminjaman
+        WHERE $whereSql
+        GROUP BY p.id_t_peminjaman, p.no_peminjaman, s.nama, p.tgl_pinjam, p.tgl_kembali,
+                 p.total_denda, a.no_anggota, a.nama
+        ORDER BY p.id_t_peminjaman DESC
+        LIMIT $offset, $perPage";
+$result = mysqli_query($db, $sql);
+
+include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-	<div class="row">
-                <div class="col-lg-12">
-                    <h1 class="page-header">Data Peminjaman</h1>
-                </div>
-                <!-- /.col-lg-12 -->
-	</div>
-   <div class="row">
-		<div class="col-lg-12">
-		<form method="GET">
-			<div class="form-group row">
-				<label class="col-sm-2 col-form-label">No Peminjaman</label>
-				<div class="col-sm-4">
-					<input type="text" class="form-control"  name="txtNo" value="<?php echo $txtNo; ?>">
-				</div>
-				<label class="col-sm-2 col-form-label">Tanggal Peminjaman</label>
-				<div class="col-sm-4">
-					<input type="text" class="form-control"  id="txtTgl" name="txtTgl" value="<?php echo $txtTgl; ?>">
-				</div>
-			</div>
+    <div class="row"><div class="col-lg-12"><h1 class="page-header">Data Peminjaman</h1></div></div>
+    <form method="get" class="panel panel-default"><div class="panel-body">
+        <div class="row">
+            <div class="col-md-4"><label>No Peminjaman</label><input type="text" class="form-control" name="txtNo" value="<?php echo e($nomor); ?>"></div>
+            <div class="col-md-4"><label>Nama Anggota</label><input type="text" class="form-control" name="txtNama" value="<?php echo e($nama); ?>"></div>
+            <div class="col-md-4"><label>Tanggal Peminjaman</label><input type="date" id="txtTgl" class="form-control" name="txtTgl" value="<?php echo e($tanggal); ?>"></div>
+        </div><br>
+        <button type="submit" class="btn btn-primary">Cari</button> <a href="data_peminjaman.php" class="btn btn-default">Reset</a> <a href="input_peminjaman.php" class="btn btn-success pull-right">Tambah Peminjaman</a>
+    </div></form>
 
-			<div class="form-group row">
-				<label class="col-sm-2 col-form-label">Nama Anggota</label>
-				<div class="col-sm-4">
-					<input type="text" class="form-control"  name="txtNama" value="<?php echo $txtNama; ?>">
-				</div>
-				<div class="col-sm-6">
-					<button type="submit" class="btn btn-small btn-primary btn-block">Cari</button>
-				</div>
-			</div>
-		</form>
-		</div>
-	</div>
-	<hr>
-	<div class="row">
-		<div class="col-lg-12">
-		<table class="table table-striped table-bordered table-hover">
-			<tr>
-				<th>No</th>
-				<th>No Peminjaman</th>
-				<th>Staff</th>
-				<th>Tanggal Pinjam</th>
-				<th>Tanggal Kembali</th>
-				<th>No Anggota</th>
-				<th>Nama Anggota</th>
-				<th>Jumlah Buku</th>
-				<th colspan="2">Action</th>
-			</tr>
-		  <?php
-			$hal=1;
-	
-			if (!isset($_GET['hal'])) {
-				$page=1;
-			}else{
-				$page= $_GET['hal'];
-			}
-			
-			$max_results = 10;
-			$from = (($page * $max_results) - $max_results);
-			
-			$sql = "SELECT * FROM v_peminjaman $where LIMIT $from, $max_results";
-			//echo $sql;
-			$result = mysqli_query($db,$sql);
-			$jum_data = mysqli_num_rows($result);
-			
-			$no = 1;
-			while($tampil = mysqli_fetch_array($result,MYSQLI_ASSOC))
-			{
-				?>
-					<tr>
-						<td><?php echo $no;?></td>
-						<td><?php echo $tampil['no_peminjaman']; ?></td>
-						<td><?php echo $tampil['staff']; ?></td>
-						<td><?php echo $tampil['tgl_pinjam']; ?></td>
-						<td><?php echo $tampil['tgl_kembali']; ?></td>
-						<td><?php echo $tampil['no_anggota']; ?></td>
-						<td><?php echo $tampil['anggota']; ?></td>
-						<td><?php echo $tampil['jum']; ?></td>
-						<td><a href="input_peminjaman.php?id=<?php echo $tampil['id_t_peminjaman'];?>" class="btn btn-info">Edit</a></td>
-						<td><a href="detil_peminjaman.php?id=<?php echo $tampil['id_t_peminjaman'];?>" class="btn btn-warning">Detil</a></td>
-					</tr>
-					
-				<?php
-				$no++;
-			}
-				?>
-		  </table>
-		  <br>
-		  <?php
-				$total_sql = "SELECT COUNT(*) AS NUM FROM v_peminjaman";
-				$total_results = mysqli_query($db,$total_sql);
-				$row = mysqli_fetch_array($total_results,MYSQLI_ASSOC);
-				$jum = $row['NUM'];
-				$total_pages= ceil($jum / $max_results);
-				//echo $jum;
-				
-				//jumlah data setelah filter
-				if($jum_data == 0){
-					echo "Data tidak ditemukan";
-				}
-				
-				echo "<center> Halaman <br>";
-				
-				if ($hal > 1){
-					$prev= ($page - 1);
-					}
-					
-				for($i=1; $i<=$total_pages; $i++){
-						if (($hal)== $i){
-							echo "<a href=$_SERVER[PHP_SELF]?hal=$i> $i</a>";
-							}else{
-							echo "<a href=$_SERVER[PHP_SELF]?hal=$i> $i</a>";
-							}
-						}
-						
-				if($hal < $total_pages){
-					$next=($page + 1);
-					}
-				
-				echo "</center>";
-				?>
-		  </div>
-	</div>
+    <div class="table-responsive"><table class="table table-striped table-bordered table-hover">
+        <thead><tr><th>No</th><th>No Peminjaman</th><th>Staff</th><th>Tanggal Pinjam</th><th>Tanggal Kembali</th><th>No Anggota</th><th>Nama Anggota</th><th>Jumlah Buku</th><th>Total Denda</th><th colspan="2">Aksi</th></tr></thead>
+        <tbody>
+        <?php $no = $offset + 1; while ($loan = mysqli_fetch_assoc($result)): ?>
+            <tr>
+                <td><?php echo $no++; ?></td>
+                <td><?php echo e($loan['no_peminjaman']); ?></td>
+                <td><?php echo e($loan['staff']); ?></td>
+                <td><?php echo e($loan['tgl_pinjam']); ?></td>
+                <td><?php echo e($loan['tgl_kembali'] ?: '-'); ?></td>
+                <td><?php echo e($loan['no_anggota']); ?></td>
+                <td><?php echo e($loan['anggota']); ?></td>
+                <td><?php echo (int) $loan['jum']; ?></td>
+                <td>Rp <?php echo number_format((int) ($loan['total_denda'] ?? 0), 0, ',', '.'); ?></td>
+                <td><a href="input_peminjaman.php?id=<?php echo (int) $loan['id_t_peminjaman']; ?>" class="btn btn-info btn-sm">Kelola</a></td>
+                <td><a href="detil_peminjaman.php?id=<?php echo (int) $loan['id_t_peminjaman']; ?>" class="btn btn-warning btn-sm">Detail</a></td>
+            </tr>
+        <?php endwhile; ?>
+        <?php if ($total === 0): ?><tr><td colspan="11" class="text-center">Data tidak ditemukan.</td></tr><?php endif; ?>
+        </tbody>
+    </table></div>
+
+    <?php if ($totalPages > 1): ?><nav><ul class="pagination"><?php for ($i = 1; $i <= $totalPages; $i++): $url = '?' . http_build_query(array_merge($_GET, ['hal' => $i])); ?><li class="<?php echo $i === $page ? 'active' : ''; ?>"><a href="<?php echo e($url); ?>"><?php echo $i; ?></a></li><?php endfor; ?></ul></nav><?php endif; ?>
 </div>
-<?php 
-include "footer.php";
-?>
-<script type="text/javascript">
-		$(document).ready(function(e) {
-		$("#txtTgl").datepicker({dateFormat: "yy-mm-dd"});
-	});
-</script>
+<?php include __DIR__ . '/footer.php'; ?>

@@ -1,16 +1,6 @@
 <?php
-   include('koneksi.php');
-   session_start();
-   
-   $user_check = $_SESSION['login_user'];
-   
-   $ses_sql = mysqli_query($db,"select username from t_account where username = '$user_check' ");
-   
-   $row = mysqli_fetch_array($ses_sql,MYSQLI_ASSOC);
-   
-   $login_session = $row['username'];
-   
-   if(!isset($_SESSION['login_user'])){
-      header("location:index.php");
-   }
-?>
+require_once __DIR__ . '/koneksi.php';
+
+app_session_start();
+$current_account = require_login($db, '../index.php');
+$login_session = $current_account['username'];
