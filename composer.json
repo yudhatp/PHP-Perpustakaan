@@ -1,0 +1,16 @@
+{
+  "name": "yudhatp/php-perpustakaan",
+  "description": "Aplikasi perpustakaan PHP native yang ditargetkan untuk PHP 8.3.",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": "^8.3",
+    "ext-fileinfo": "*",
+    "ext-mysqli": "*",
+    "ext-session": "*"
+  },
+  "config": {
+    "platform-check": true,
+    "sort-packages": true
+  }
+}

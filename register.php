@@ -50,64 +50,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Registrasi | Perpustakaan</title>
+    <meta name="theme-color" content="#0f172a">
+    <title>Registrasi | Perpustakaan 5F</title>
+    <link rel="stylesheet" href="template/css/bootstrap.min.css">
     <link rel="stylesheet" href="template/alert.css">
-    <link href="template/css/bootstrap.min.css" rel="stylesheet">
-    <link href="template/css/sb-admin-2.css" rel="stylesheet">
+    <link rel="stylesheet" href="template/css/app-modern.css">
 </head>
-<body>
-<div class="container">
-    <div class="row">
-        <div class="col-md-4 col-md-offset-4">
-            <div class="login-panel panel panel-default">
-                <div class="panel-heading">
-                    <h3 class="panel-title">Daftar Akun Anggota</h3>
-                </div>
-                <div class="panel-body">
-                    <form method="post" autocomplete="on">
-                        <fieldset>
-                            <?php echo csrf_field(); ?>
-                            <?php if ($error !== ''): ?>
-                                <div class="alert">
-                                    <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-                                    <?php echo e($error); ?>
-                                </div>
-                            <?php endif; ?>
-                            <div class="form-group">
-                                <label>Username</label>
-                                <input type="text" minlength="3" maxlength="30" class="form-control" name="username" value="<?php echo e($_POST['username'] ?? ''); ?>" autocomplete="username" required>
-                                <small>Gunakan huruf, angka, atau underscore.</small>
-                            </div>
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" minlength="8" maxlength="72" class="form-control" id="password" name="password" autocomplete="new-password" required>
-                                <small>Kekuatan: <strong id="passstrength">-</strong></small>
-                            </div>
-                            <div class="form-group">
-                                <label>Konfirmasi Password</label>
-                                <input type="password" minlength="8" maxlength="72" class="form-control" name="password_confirmation" autocomplete="new-password" required>
-                            </div>
-                            <button type="submit" class="btn btn-md btn-primary btn-block">Buat Akun</button>
-                            <br>
-                            Sudah punya akun? <a href="login.php">Login di sini</a>
-                        </fieldset>
-                    </form>
-                </div>
+<body class="auth-page">
+<div class="auth-layout">
+    <section class="auth-visual" aria-label="Informasi pendaftaran">
+        <div class="auth-visual-content">
+            <div class="auth-logo">
+                <span class="auth-logo-mark"><span class="glyphicon glyphicon-book"></span></span>
+                <span><strong>Perpustakaan 5F</strong><span>Library Management System</span></span>
+            </div>
+            <h1>Mulai akses koleksi perpustakaan dari satu akun.</h1>
+            <p>Buat akun anggota untuk melihat katalog buku dan memantau riwayat peminjaman. Data profil dapat dilengkapi setelah login.</p>
+            <div class="auth-feature-list">
+                <span><i class="glyphicon glyphicon-ok-circle"></i> Registrasi mandiri</span>
+                <span><i class="glyphicon glyphicon-ok-circle"></i> Riwayat peminjaman</span>
+                <span><i class="glyphicon glyphicon-ok-circle"></i> Akses katalog</span>
             </div>
         </div>
-    </div>
+    </section>
+
+    <main class="auth-form-side">
+        <div class="auth-card">
+            <div class="auth-mobile-brand"><span class="glyphicon glyphicon-book"></span> Perpustakaan 5F</div>
+            <header class="auth-card-header">
+                <h2>Buat akun anggota</h2>
+                <p>Gunakan username yang mudah diingat dan password yang cukup kuat.</p>
+            </header>
+
+            <form method="post" autocomplete="on">
+                <?php echo csrf_field(); ?>
+                <?php if ($error !== ''): ?>
+                    <div class="alert">
+                        <span class="closebtn" onclick="this.parentElement.style.display='none';" aria-label="Tutup">&times;</span>
+                        <?php echo e($error); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" minlength="3" maxlength="30" class="form-control" name="username" value="<?php echo e($_POST['username'] ?? ''); ?>" autocomplete="username" placeholder="Huruf, angka, atau underscore" required>
+                    <small>Gunakan 3–30 karakter tanpa spasi.</small>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" minlength="8" maxlength="72" class="form-control" id="password" name="password" autocomplete="new-password" placeholder="Minimal 8 karakter" required>
+                    <small>Kekuatan password: <strong id="passstrength">-</strong></small>
+                </div>
+                <div class="form-group">
+                    <label for="password_confirmation">Konfirmasi Password</label>
+                    <input type="password" minlength="8" maxlength="72" class="form-control" id="password_confirmation" name="password_confirmation" autocomplete="new-password" placeholder="Ulangi password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Buat Akun</button>
+                <p class="auth-footer-link">Sudah memiliki akun? <a href="login.php">Kembali ke halaman login</a></p>
+            </form>
+        </div>
+    </main>
 </div>
 <script src="template/js/jquery-3.7.0.min.js"></script>
 <script src="template/js/bootstrap.min.js"></script>
 <script>
 $('#password').on('input', function () {
     var value = $(this).val();
-    var label = 'Lemah';
+    var label = value.length === 0 ? '-' : 'Lemah';
     if (value.length >= 12 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value)) {
         label = 'Kuat';
     } else if (value.length >= 8 && /[A-Za-z]/.test(value) && /\d/.test(value)) {

@@ -44,3 +44,12 @@
 - Kolom username, password, nama, alamat, keterangan, dan audit user diperlebar.
 - View diperbaiki agar kompatibel dengan mode `ONLY_FULL_GROUP_BY`.
 - Index unik ditambahkan untuk username, nomor anggota, nomor peminjaman, profil akun, dan detail buku per transaksi.
+
+## Target PHP 8.3
+
+- Minimum runtime dinaikkan ke PHP 8.3.
+- Pemeriksaan ekstensi `mysqli` dan driver `mysqlnd` ditambahkan.
+- Session strict mode diaktifkan.
+- TCPDF lama dipatch agar tidak menghasilkan deprecated warning pada alur PDF yang diuji.
+- Folder `lib/tcpdf/old_lib` yang tidak dipakai dihapus karena berisi API PHP usang.
+- Ditambahkan `composer.json`, `PHP83_UPGRADE.md`, dan `tools/php83_check.php`.

@@ -1,6 +1,8 @@
 # PHP Perpustakaan 5F
 
-Aplikasi perpustakaan berbasis PHP native dan MySQL. Versi ini tetap menggunakan struktur PHP native, tetapi telah diperbaiki agar lebih aman dan kompatibel dengan PHP modern.
+Aplikasi perpustakaan berbasis PHP native dan MySQL. Versi ini tetap menggunakan struktur PHP native dan ditargetkan untuk PHP 8.3.
+
+![Dashboard PHP Perpustakaan](screenshots/dashboard.png)
 
 ## Fitur
 
@@ -13,8 +15,9 @@ Aplikasi perpustakaan berbasis PHP native dan MySQL. Versi ini tetap menggunakan
 
 ## Persyaratan
 
-- PHP 7.4 sampai PHP 8.4.
-- Ekstensi PHP: `mysqli`, `fileinfo`, dan ekstensi standar PHP.
+- PHP 8.3 atau versi lebih baru.
+- Ekstensi wajib: `mysqli`, `mysqlnd`, `fileinfo`, dan `session`.
+- Ekstensi yang disarankan: `mbstring`, `gd`, dan `curl`.
 - MySQL 5.7+ atau MariaDB 10.3+.
 - Apache, Nginx, Laragon, XAMPP, atau PHP built-in server untuk pengujian.
 
@@ -36,7 +39,8 @@ DB_PASS=
 
 4. Import `database/perpustakaan.sql`.
 5. Pastikan folder `image/buku` dapat ditulis oleh web server.
-6. Buka project dari browser.
+6. Jalankan pemeriksaan lingkungan: `php tools/php83_check.php`.
+7. Buka project dari browser.
 
 Untuk pengujian menggunakan PHP built-in server dari folder project:
 
@@ -83,3 +87,11 @@ Password akun contoh masih memakai hash lama di dump database. Setelah login ber
 ## Ringkasan Perbaikan
 
 Detail perubahan tersedia di `UPDATES_2026.md`.
+
+## Catatan PHP 8.3
+
+Detail perubahan kompatibilitas tersedia di `PHP83_UPGRADE.md`.
+
+## Redesign antarmuka 2026
+
+Paket ini sudah memakai tampilan baru yang responsif tanpa mengubah fitur aplikasi. Detail perubahan tersedia pada `REDESIGN_2026.md`.

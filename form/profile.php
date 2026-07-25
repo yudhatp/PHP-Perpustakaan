@@ -65,34 +65,63 @@ unset($_SESSION['flash_success']);
 include __DIR__ . '/header.php';
 ?>
 <div id="page-wrapper">
-    <div class="row"><div class="col-lg-12"><h1 class="page-header">Profile</h1></div></div>
+    <div class="row"><div class="col-lg-12"><h1 class="page-header">Profil Pengguna</h1></div></div>
 
     <?php if ($flashSuccess !== ''): ?>
         <div class="alert alert-success"><?php echo e($flashSuccess); ?></div>
     <?php endif; ?>
 
     <?php if ($profileIncomplete): ?>
-        <div class="alert alert-warning">Profil belum lengkap. Lengkapi profil agar fitur anggota/staff dapat digunakan.</div>
+        <div class="alert alert-warning">Profil belum lengkap. Lengkapi profil agar seluruh fitur akun dapat digunakan.</div>
     <?php endif; ?>
 
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="row"><label class="col-sm-2">Nama</label><div class="col-sm-6"><p><?php echo e($profile['nama'] ?: '-'); ?></p></div></div>
-            <?php if ($roleId === 3): ?>
-                <div class="row"><label class="col-sm-2">No Anggota</label><div class="col-sm-6"><p><?php echo e($profile['no_anggota'] ?: '-'); ?></p></div></div>
-            <?php else: ?>
-                <div class="row"><label class="col-sm-2">Role</label><div class="col-sm-6"><p><?php echo e($profile['nama_role']); ?></p></div></div>
-            <?php endif; ?>
-            <div class="row"><label class="col-sm-2">Tanggal Register</label><div class="col-sm-6"><p><?php echo e($profile['tgl_register']); ?></p></div></div>
-            <div class="row"><label class="col-sm-2">Perubahan Password</label><div class="col-sm-6"><p><?php echo e($profile['last_change_pass']); ?></p></div></div>
-            <div class="row"><label class="col-sm-2">Perubahan Profil</label><div class="col-sm-6"><p><?php echo e($profile['last_change_profile']); ?></p></div></div>
+    <section class="profile-summary">
+        <div class="profile-summary-aside">
+            <div class="profile-summary-avatar"><?php echo e(strtoupper(substr($profile['nama'] ?: (string) $account['username'], 0, 1))); ?></div>
+            <h3><?php echo e($profile['nama'] ?: (string) $account['username']); ?></h3>
+            <p><?php echo e($profile['nama_role'] ?: 'Pengguna'); ?></p>
         </div>
-    </div>
-    <hr>
-    <div class="row"><div class="col-sm-8">
-        <?php if ($editUrl !== ''): ?><a href="<?php echo e($editUrl); ?>" class="btn btn-primary"><?php echo $profileIncomplete ? 'Lengkapi Profil' : 'Ubah Profil'; ?></a><?php endif; ?>
-        <a href="ganti_password.php" class="btn btn-primary">Ubah Password</a>
-        <?php if ($cardUrl !== ''): ?><a href="<?php echo e($cardUrl); ?>" class="btn btn-primary">Cetak Kartu Anggota</a><?php endif; ?>
-    </div></div>
+        <div class="profile-summary-content">
+            <div class="profile-info-grid">
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Nama lengkap</span>
+                    <span class="profile-info-value"><?php echo e($profile['nama'] ?: '-'); ?></span>
+                </div>
+                <?php if ($roleId === 3): ?>
+                    <div class="profile-info-item">
+                        <span class="profile-info-label">Nomor anggota</span>
+                        <span class="profile-info-value"><?php echo e($profile['no_anggota'] ?: '-'); ?></span>
+                    </div>
+                <?php else: ?>
+                    <div class="profile-info-item">
+                        <span class="profile-info-label">Hak akses</span>
+                        <span class="profile-info-value"><?php echo e($profile['nama_role']); ?></span>
+                    </div>
+                <?php endif; ?>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Tanggal registrasi</span>
+                    <span class="profile-info-value"><?php echo e($profile['tgl_register']); ?></span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Perubahan password terakhir</span>
+                    <span class="profile-info-value"><?php echo e($profile['last_change_pass']); ?></span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Perubahan profil terakhir</span>
+                    <span class="profile-info-value"><?php echo e($profile['last_change_profile']); ?></span>
+                </div>
+                <div class="profile-info-item">
+                    <span class="profile-info-label">Username</span>
+                    <span class="profile-info-value"><?php echo e((string) $account['username']); ?></span>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <?php if ($editUrl !== ''): ?><a href="<?php echo e($editUrl); ?>" class="btn btn-primary"><?php echo $profileIncomplete ? 'Lengkapi Profil' : 'Ubah Profil'; ?></a><?php endif; ?>
+                <a href="ganti_password.php" class="btn btn-default">Ubah Password</a>
+                <?php if ($cardUrl !== ''): ?><a href="<?php echo e($cardUrl); ?>" class="btn btn-success">Cetak Kartu Anggota</a><?php endif; ?>
+            </div>
+        </div>
+    </section>
 </div>
 <?php include __DIR__ . '/footer.php'; ?>

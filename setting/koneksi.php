@@ -10,6 +10,21 @@ if (!ob_get_level()) {
     ob_start();
 }
 
+if (PHP_VERSION_ID < 80300) {
+    http_response_code(500);
+    exit('Aplikasi membutuhkan PHP 8.3 atau versi yang lebih baru. Versi aktif: ' . PHP_VERSION);
+}
+
+if (!extension_loaded('mysqli')) {
+    http_response_code(500);
+    exit('Ekstensi PHP mysqli belum aktif. Aktifkan extension=mysqli pada php.ini lalu restart web server.');
+}
+
+if (!function_exists('mysqli_stmt_get_result')) {
+    http_response_code(500);
+    exit('Driver mysqlnd diperlukan karena aplikasi menggunakan mysqli_stmt_get_result(). Aktifkan mysqlnd pada instalasi PHP.');
+}
+
 function load_env_file(string $path): void
 {
     if (!is_file($path) || !is_readable($path)) {
@@ -78,6 +93,8 @@ function app_session_start(): void
     }
 
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.use_only_cookies', '1');
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',

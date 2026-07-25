@@ -4107,6 +4107,8 @@ class TCPDF {
 	 * @since 5.9.000 (2010-09-28)
 	 */
 	public function getRawCharWidth($char) {
+		// PHP 8.1+ deprecates implicit float-to-int conversion for array keys.
+		$char = (int) $char;
 		if ($char == 173) {
 			// SHY character will not be printed
 			return (0);

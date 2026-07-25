@@ -39,17 +39,85 @@ include __DIR__ . '/header.php';
 <div id="page-wrapper">
     <div class="row"><div class="col-lg-12"><h1 class="page-header">Dashboard</h1></div></div>
 
+    <section class="dashboard-welcome">
+        <div class="dashboard-welcome-copy">
+            <h2>Selamat datang, <?php echo e((string) $account['username']); ?>.</h2>
+            <p><?php echo in_array($roleId, [1, 2], true)
+                ? 'Pantau aktivitas perpustakaan hari ini dan akses modul utama melalui menu di sebelah kiri.'
+                : 'Lihat koleksi buku dan pantau riwayat peminjaman Anda melalui satu dashboard yang lebih ringkas.'; ?></p>
+        </div>
+        <span class="dashboard-welcome-icon"><span class="glyphicon glyphicon-book"></span></span>
+    </section>
+
     <?php if (in_array($roleId, [1, 2], true)): ?>
         <div class="row">
-            <div class="col-lg-3 col-md-6"><div class="panel panel-green"><div class="panel-heading"><div class="text-right"><div class="huge"><?php echo $todayLoans; ?></div><div>Peminjaman Hari Ini</div></div></div><a href="data_peminjaman.php"><div class="panel-footer">Lihat Detail<div class="clearfix"></div></div></a></div></div>
-            <div class="col-lg-3 col-md-6"><div class="panel panel-primary"><div class="panel-heading"><div class="text-right"><div class="huge"><?php echo $todayMembers; ?></div><div>Anggota Baru</div></div></div><a href="data_anggota.php"><div class="panel-footer">Lihat Detail<div class="clearfix"></div></div></a></div></div>
-            <div class="col-lg-3 col-md-6"><div class="panel panel-yellow"><div class="panel-heading"><div class="text-right"><div class="huge"><?php echo $todayBooks; ?></div><div>Buku Baru</div></div></div><a href="data_buku.php"><div class="panel-footer">Lihat Detail<div class="clearfix"></div></div></a></div></div>
+            <div class="col-lg-4 col-md-4 col-sm-6">
+                <article class="dashboard-stat is-green">
+                    <div class="dashboard-stat-main">
+                        <span class="dashboard-stat-icon"><span class="glyphicon glyphicon-transfer"></span></span>
+                        <div>
+                            <p class="dashboard-stat-value"><?php echo $todayLoans; ?></p>
+                            <div class="dashboard-stat-label">Peminjaman hari ini</div>
+                        </div>
+                    </div>
+                    <a class="dashboard-stat-link" href="data_peminjaman.php"><span>Lihat data peminjaman</span><span class="glyphicon glyphicon-arrow-right"></span></a>
+                </article>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6">
+                <article class="dashboard-stat is-blue">
+                    <div class="dashboard-stat-main">
+                        <span class="dashboard-stat-icon"><span class="glyphicon glyphicon-user"></span></span>
+                        <div>
+                            <p class="dashboard-stat-value"><?php echo $todayMembers; ?></p>
+                            <div class="dashboard-stat-label">Anggota baru hari ini</div>
+                        </div>
+                    </div>
+                    <a class="dashboard-stat-link" href="data_anggota.php"><span>Lihat data anggota</span><span class="glyphicon glyphicon-arrow-right"></span></a>
+                </article>
+            </div>
+            <div class="col-lg-4 col-md-4 col-sm-6">
+                <article class="dashboard-stat is-amber">
+                    <div class="dashboard-stat-main">
+                        <span class="dashboard-stat-icon"><span class="glyphicon glyphicon-book"></span></span>
+                        <div>
+                            <p class="dashboard-stat-value"><?php echo $todayBooks; ?></p>
+                            <div class="dashboard-stat-label">Buku baru hari ini</div>
+                        </div>
+                    </div>
+                    <a class="dashboard-stat-link" href="data_buku.php"><span>Lihat katalog buku</span><span class="glyphicon glyphicon-arrow-right"></span></a>
+                </article>
+            </div>
         </div>
     <?php else: ?>
         <?php if ($memberId <= 0): ?>
-            <div class="alert alert-warning">Profil anggota belum lengkap. <a href="input_anggota.php">Lengkapi profil sekarang</a>.</div>
+            <div class="alert alert-warning">Profil anggota belum lengkap. <a href="input_anggota.php">Lengkapi profil sekarang</a> agar seluruh fitur anggota dapat digunakan.</div>
         <?php else: ?>
-            <div class="row"><div class="col-lg-3 col-md-6"><div class="panel panel-primary"><div class="panel-heading"><div class="text-right"><div class="huge"><?php echo $totalMemberLoans; ?></div><div>Total Peminjaman</div></div></div><a href="history_peminjaman.php?id=<?php echo $memberId; ?>"><div class="panel-footer">Lihat Riwayat<div class="clearfix"></div></div></a></div></div></div>
+            <div class="row">
+                <div class="col-lg-4 col-md-5 col-sm-6">
+                    <article class="dashboard-stat is-blue">
+                        <div class="dashboard-stat-main">
+                            <span class="dashboard-stat-icon"><span class="glyphicon glyphicon-list-alt"></span></span>
+                            <div>
+                                <p class="dashboard-stat-value"><?php echo $totalMemberLoans; ?></p>
+                                <div class="dashboard-stat-label">Total riwayat peminjaman</div>
+                            </div>
+                        </div>
+                        <a class="dashboard-stat-link" href="history_peminjaman.php?id=<?php echo $memberId; ?>"><span>Lihat riwayat peminjaman</span><span class="glyphicon glyphicon-arrow-right"></span></a>
+                    </article>
+                </div>
+                <div class="col-lg-4 col-md-5 col-sm-6">
+                    <article class="dashboard-stat is-green">
+                        <div class="dashboard-stat-main">
+                            <span class="dashboard-stat-icon"><span class="glyphicon glyphicon-book"></span></span>
+                            <div>
+                                <p class="dashboard-stat-value">Katalog</p>
+                                <div class="dashboard-stat-label">Temukan buku yang tersedia</div>
+                            </div>
+                        </div>
+                        <a class="dashboard-stat-link" href="data_buku.php"><span>Buka katalog buku</span><span class="glyphicon glyphicon-arrow-right"></span></a>
+                    </article>
+                </div>
+            </div>
         <?php endif; ?>
     <?php endif; ?>
 </div>
