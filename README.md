@@ -95,3 +95,6 @@ Detail perubahan kompatibilitas tersedia di `PHP83_UPGRADE.md`.
 ## Redesign antarmuka 2026
 
 Paket ini sudah memakai tampilan baru yang responsif tanpa mengubah fitur aplikasi. Detail perubahan tersedia pada `REDESIGN_2026.md`.
+
+## CATATAN
+Project ini diupgrade oleh AI, belum dilakukan testing end-to-end dan belum cocok untuk production
